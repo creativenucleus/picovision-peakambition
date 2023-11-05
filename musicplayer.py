@@ -83,96 +83,73 @@ class MusicChannel:
 
 class MusicPlayer:
     def __init__(self):
-        self.channels = [MusicChannel(0, {
-            "waveforms": Channel.SINE | Channel.TRIANGLE,
-            "attack": 0.1, "decay": 0.01, "sustain": 0.1, "release": 2,
-            "volume": .2
-        })]
+        self.iPattern = 0
+        self.iRow = 0
+        
+        self.channels = [
+            MusicChannel(0, {
+                "waveforms": Channel.SINE | Channel.TRIANGLE,
+                "attack": 0.1, "decay": 0.01, "sustain": 0.1, "release": 2,
+                "volume": .2
+            }), MusicChannel(1, {
+                "waveforms": Channel.SINE,
+                "attack": 0.1, "decay": 0.1, "sustain": 0.1, "release": 0.1,
+                "volume": .2
+            }), MusicChannel(2, {
+                "waveforms": Channel.NOISE,
+                "attack": 0.0, "decay": 0.1, "sustain": 0.0, "release": 0,
+                "volume": .2
+            })
+        ]
         
         phrases = {
             "empty": ["", "", "", "", "", "", "", ""],
-#            "lead1": ["C4", "", "F4", "", "G4", "", "C3", ""],
-#            "lead2": ["D4", "", "E4", "", "A4", "", "D3", ""],
-            "lead1": ["C5:a47", "", "", "", "", "", "", ""],
-            "lead2": ["D5:a47", "", "", "", "", "", "", ""],
+            "lead1": ["C4:a47", "", "", "", "", "", "", ""],
+            "lead2": ["D4:a47", "", "", "", "", "", "", ""],
             "lead3": ["E4:a37", "", "", "", "", "", "", ""],
-            "lead4": ["C4:a47", "", "", "", "", "", "", ""],
+            "lead4": ["C4:a47", "", "", "", "", "", "", "-"],
             "bass1": ["C2", "", "C3", "", "C2", "", "C3", ""],
-            "bass2": ["G2", "", "G3", "", "G2", "", "G3", ""],
-            "beats1": ["C7", "", "", "", "C8", "", "C8", ""],
+            "bass2": ["D2", "", "G3", "", "C2", "", "G3", ""],
+            "beats1": ["C7", "", "", "", "", "", "", ""],
+            "beats2": ["C7", "", "", "C8", "", "", "", ""],
         }
               
         self.patterns=[]
         self.patterns.append([[],[],[]])
-        """
-        self.patterns[0][0].extend(phrases["bass1"])
-        self.patterns[0][0].extend(phrases["bass1"])
-        self.patterns[0][0].extend(phrases["bass2"])
-        self.patterns[0][0].extend(phrases["bass2"])
-        self.patterns[0][0].extend(phrases["bass1"])
-        self.patterns[0][0].extend(phrases["bass1"])
-        self.patterns[0][0].extend(phrases["bass2"])
-        self.patterns[0][0].extend(phrases["bass2"])
-        self.patterns[0][1].extend(phrases["empty"])
-        self.patterns[0][1].extend(phrases["empty"])
-        self.patterns[0][1].extend(phrases["empty"])
-        self.patterns[0][1].extend(phrases["empty"])
-        """
+        
         self.patterns[0][0].extend(phrases["lead1"])
         self.patterns[0][0].extend(phrases["lead2"])
         self.patterns[0][0].extend(phrases["lead3"])
         self.patterns[0][0].extend(phrases["lead4"])
-        """
-        self.patterns[0][2].extend(phrases["empty"])
-        self.patterns[0][2].extend(phrases["beats1"])
-        self.patterns[0][2].extend(phrases["empty"])
-        self.patterns[0][2].extend(phrases["beats1"])
-        self.patterns[0][2].extend(phrases["beats1"])
-        self.patterns[0][2].extend(phrases["beats1"])
-        self.patterns[0][2].extend(phrases["beats1"])
-        self.patterns[0][2].extend(phrases["beats1"])
-        """
-        
-        self.iPattern=0
-        self.iRow=0
-        
-        """
-        self.channels={}
-        self.channels[1] = synth.channel(1)
-        self.channels[1].configure(
-            waveforms=Channel.SINE,
-            attack=0.1, decay=0.1, sustain=0.1, release=0.1,
-            volume=self.volume
-        )
 
-        self.channels[2] = synth.channel(2)
-        self.channels[2].configure(
-            waveforms=Channel.NOISE,
-            attack=0.0, decay=0.1, sustain=0.0, release=0.0,
-            volume=self.volume
-        )
-        """
-
+        self.patterns[0][1].extend(phrases["bass1"])
+        self.patterns[0][1].extend(phrases["bass1"])
+        self.patterns[0][1].extend(phrases["bass2"])
+        self.patterns[0][1].extend(phrases["bass2"])
+        
+        self.patterns[0][2].extend(phrases["beats1"])
+        self.patterns[0][2].extend(phrases["beats2"])
+        self.patterns[0][2].extend(phrases["beats1"])
+        self.patterns[0][2].extend(phrases["beats2"])
+        
     def run(self, waitTime):
-        nArpSlots = 3
+        arpsPerRow = 3
         synth.play()
 
         while True:
-#           for chan in range(3):
-            chan=0
-                        
-            noteRaw = self.patterns[self.iPattern][chan][self.iRow]
-            
-            self.channels[0].decode(self.patterns[self.iPattern][chan][self.iRow])
-            
-            for i in range(nArpSlots):
-                self.channels[0].playSlot(i)
-                sleep(waitTime/nArpSlots)
+            for iCh in range(3):
+                noteRaw = self.patterns[self.iPattern][iCh][self.iRow]
+                self.channels[iCh].decode(noteRaw)
+
+            for i in range(arpsPerRow):
+                for iCh in range(3):
+                    self.channels[iCh].playSlot(i)        
+                sleep(waitTime/arpsPerRow)
 
             self.iRow += 1
-            if self.iRow>=len(self.patterns[self.iPattern][chan]):
+            if self.iRow>=len(self.patterns[self.iPattern][0]):
                 self.iRow=0
                 self.iPattern=(self.iPattern+1)%len(self.patterns)
                 
 musicPlayer = MusicPlayer()
-musicPlayer.run(.08)
+musicPlayer.run(.07)
