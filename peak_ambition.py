@@ -1,21 +1,18 @@
-# A spinny rainbow wheel. Change up some of the constants below to see what happens.
-
-from math import sin, cos, pi, atan2, sqrt, pow, fmod
+from math import sin, cos, pi, atan2, sqrt, pow, fmod, floor
 from picographics import PicoGraphics, PEN_RGB555
-import time
+from time import ticks_cpu
 import random
+import _thread
+from music_player import MusicPlayer
 
-# Set up the display
 gfx=PicoGraphics(pen_type=PEN_RGB555, width=320, height=240)
-
-tau=pi*2
 WIDTH,HEIGHT=gfx.get_bounds()
+tau=pi*2
 WHALF=int(WIDTH/2)
 HHALF=int(HEIGHT/2)
 BLACK=gfx.create_pen(0, 0, 0)
 WHITE=gfx.create_pen(255, 255, 255)
 RED=gfx.create_pen(255, 0, 0)
-
 T=0
 
 def clamp(v,min,max):
@@ -56,7 +53,7 @@ def scaleM(points,sX,sY,sZ):
 
 def project(p):
     zF=7-p['z']/1.5
-    return [int(WHALF+(p['x']/zF)*100),int(HHALF+(p['y']/zF)*(WHALF/HHALF)*100),p['z']/zF]
+    return [floor(WHALF+(p['x']/zF)*100),floor(HHALF+(p['y']/zF)*(WHALF/HHALF)*100),p['z']/zF]
 
 def makeLetter(letter):
     if letter=='P':
@@ -159,33 +156,40 @@ def getDotProduct(v1,v2):
 VARS_3C={
     'x': 0,
     'y': -1,
+    'z': 0,
     'dx': .07,
     'dy': .01,
+    'dz': .12,
+    'rx': 0,
+    'drx': .07,
     'rz': 0,
     'drz': .07,
+    'vertices': [],
+    'triangles': [],
 }
-def effect3C(lerpPos, tweenPos):
-    xp=.52573
-    zp=.85065
-    np=0
-        
-    vertices=[
-        makeP(-xp,np,zp), makeP(xp,np,zp), makeP(-xp,np,-zp), makeP(xp,np,-zp),
-        makeP(np,zp,xp), makeP(np,zp,-xp), makeP(np,-zp,xp), makeP(np,-zp,-xp),
-        makeP(zp,xp,np), makeP(-zp,xp,np), makeP(zp,-xp,np), makeP(-zp,-xp,np)
-    ]
+
+xp=.52573
+zp=.85065
+np=0        
+VARS_3C['vertices']=[
+    makeP(-xp,np,zp), makeP(xp,np,zp), makeP(-xp,np,-zp), makeP(xp,np,-zp),
+    makeP(np,zp,xp), makeP(np,zp,-xp), makeP(np,-zp,xp), makeP(np,-zp,-xp),
+    makeP(zp,xp,np), makeP(-zp,xp,np), makeP(zp,-xp,np), makeP(-zp,-xp,np)
+]
      
-    triangles=[
-        [0,4,1], [0,9,4], [9,5,4], [4,5,8], [4,8,1],
-        [8,10,1], [8,3,10], [5,3,8], [5,2,3], [2,7,3],
-        [7,10,3], [7,6,10], [7,11,6], [11,0,6], [0,1,6],
-        [6,1,10], [9,0,11], [9,11,2], [9,2,5], [7,2,11]
-    ]
-    
+VARS_3C['triangles']=[
+    [0,4,1], [0,9,4], [9,5,4], [4,5,8], [4,8,1],
+    [8,10,1], [8,3,10], [5,3,8], [5,2,3], [2,7,3],
+    [7,10,3], [7,6,10], [7,11,6], [11,0,6], [0,1,6],
+    [6,1,10], [9,0,11], [9,11,2], [9,2,5], [7,2,11]
+]
+
+def effect3C(lerpPos, tweenPos):
     tverts=[]
-    rX,rY,rZ=lerpPos*15,lerpPos*19,VARS_3C['rz']
+    rX,rY,rZ=lerpPos*19,VARS_3C['rx'],VARS_3C['rz']
     VARS_3C['x']+=VARS_3C['dx']
     VARS_3C['y']+=VARS_3C['dy']
+    VARS_3C['z']+=VARS_3C['dz']
     overY = VARS_3C['y']-1
     if overY > 0:
         VARS_3C['y']=1-(VARS_3C['dy']-overY)
@@ -193,13 +197,15 @@ def effect3C(lerpPos, tweenPos):
     if VARS_3C['x'] < -3 or VARS_3C['x'] > 3:
         VARS_3C['dx']=-VARS_3C['dx']
         VARS_3C['drz']=-VARS_3C['drz']
+    if VARS_3C['z'] < -1 or VARS_3C['z'] > 1:
+        VARS_3C['dz']=-VARS_3C['dz']
+        VARS_3C['drx']=-VARS_3C['drx']
     VARS_3C['dy']+=.01
+    VARS_3C['rx']+=VARS_3C['drx']
     VARS_3C['rz']+=VARS_3C['drz']
 
-    z=5+sin(lerpPos*20)*2
-
-    for nvert,vert in enumerate(vertices):
-        movedP = trans(rotZ(rotY(rotX(vert,rX),rY),rZ),VARS_3C['x'],VARS_3C['y'],z)
+    for nvert,vert in enumerate(VARS_3C['vertices']):
+        movedP = trans(rotZ(rotY(rotX(vert,rX),rY),rZ),VARS_3C['x'],VARS_3C['y'],5+VARS_3C['z'])
         tverts.append({
             'p': movedP,
             'pp': project(movedP)
@@ -207,13 +213,13 @@ def effect3C(lerpPos, tweenPos):
         
     lightVector={'x': 0, 'y': 0.77, 'z': 0.77}
     
-    for ntri,tri in enumerate(triangles):
+    for ntri,tri in enumerate(VARS_3C['triangles']):
         p1,p2,p3=tverts[tri[0]], tverts[tri[1]], tverts[tri[2]]
         normal=getNormal(p1['p'],p2['p'],p3['p'])
         culling=getDotProduct(normal,{'x': 0, 'y': 0, 'z': 1})
         if culling>=0:
             lightStrength=clamp(getDotProduct(normal,lightVector)*.7,0,1)
-            gfx.set_pen(gfx.create_pen_hsv(ntri/len(triangles),1,lightStrength))
+            gfx.set_pen(gfx.create_pen_hsv(ntri/len(VARS_3C['triangles']),1,clamp(lightStrength*p2['pp'][2]/2,0,1)))
             gfx.triangle(p1['pp'][0],p1['pp'][1], p2['pp'][0],p2['pp'][1], p3['pp'][0],p3['pp'][1])
 
 def effect4O(lerpPos, tweenPos):
@@ -255,8 +261,8 @@ def effect6I(lerpPos, tweenPos):
 def effect7S(lerpPos, tweenPos):
     nBobs=20
     for i in range(nBobs):
-        x=WHALF+int(sin(i*.35+lerpPos*11)*120*lerpPos)
-        y=HHALF+int(sin(i*.2+lerpPos*16)*80*lerpPos)
+        x=WHALF+int(sin(i*.35+lerpPos*25)*120*lerpPos)
+        y=HHALF+int(sin(i*.2+lerpPos*40)*80*lerpPos)
         gfx.set_pen(gfx.create_pen_hsv(i/nBobs,1,.6))
         gfx.circle(x-1,y-1,8)
         gfx.set_pen(gfx.create_pen_hsv(i/nBobs,.8,1))
@@ -273,9 +279,9 @@ def effect8I(lerpPos, tweenPos):
             gfx.pixel_span(0,yline,WIDTH)
 
 SCRIPT=[
+    {'action':"effect", 'fn':effect3C, 'duration': 200, 'legend': "Icosahedron", 'detail': "With basic face lighting"},
     {'action':"effect", 'fn':effect4O, 'duration': 200, 'legend': "Dot Tunnel", 'detail': ""},
-    {'action':"effect", 'fn':effect7S, 'duration': 400, 'legend': "Bobs", 'detail': ""},
-    {'action':"effect", 'fn':effect3C, 'duration': 400, 'legend': "Icosahedron", 'detail': "With basic face lighting"},
+    {'action':"effect", 'fn':effect7S, 'duration': 200, 'legend': "Bobs", 'detail': ""},
     {
         'action':"effect", 'fn':effect2I, 'duration': 200, 'legend': "Twister",
         'detail': "What an amazing effect\nDoes this spread over two lines?"
@@ -286,10 +292,10 @@ SCRIPT=[
     {'action':"move", 'letter':3},
     {'action':"move", 'letter':4},
     {'action':"move", 'letter':5},
-    {'action':"effect", 'fn':effect6I, 'duration': 400, 'legend': "Alcatraz bars", 'detail': ""},
+    {'action':"effect", 'fn':effect6I, 'duration': 200, 'legend': "Alcatraz bars", 'detail': ""},
     {'action':"move", 'letter':6},
     {'action':"move", 'letter':7},
-    {'action':"effect", 'fn':effect8I, 'duration': 400, 'legend': "Raster bars", 'detail': ""},
+    {'action':"effect", 'fn':effect8I, 'duration': 200, 'legend': "Raster bars", 'detail': ""},
     {'action':"move", 'letter':8},
     {'action':"move", 'letter':9},
 ]
@@ -347,33 +353,42 @@ def lerp(t,v1,v2):
 
 def smoothStep(t):
     return t * t * (3.0 - 2.0 * t)
-
-TIMER_SAMPLES=10
-TIMER_N=0
-TIMER_COUNT=0
-DURATION=""
-while True:
-    timestamp=time.ticks_cpu()
-    gfx.set_pen(BLACK)
-    gfx.clear()
-
-    doScript()
-
-    if SCRIPT_ITEM['action'] == "move":
-        for i,letter in enumerate(LETTERS):
-            gfx.set_pen(gfx.create_pen_hsv(i*0.02+T*0.01,1,1))
-            drawLineString(letter)
-
-    gfx.set_pen(WHITE)
-    gfx.text(DURATION, 0,0, fixed_width=1,scale=1)
-    debugPrintScript()
-    gfx.update()
-    T=T+1
     
-    TIMER_COUNT += time.ticks_cpu()-timestamp
-    TIMER_N += 1
-    if TIMER_N == TIMER_SAMPLES:
-        DURATION=str(TIMER_COUNT/TIMER_SAMPLES)
-        TIMER_N=0
-        TIMER_COUNT=0
-    
+def gfx_thread():
+    TIMER_SAMPLES=10
+    TIMER_N=0
+    TIMER_COUNT=0
+    DURATION=""
+    global T
+    while True:
+        timestamp=ticks_cpu()
+        gfx.set_pen(BLACK)
+        gfx.clear()
+
+        doScript()
+
+        if SCRIPT_ITEM['action'] == "move":
+            for i,letter in enumerate(LETTERS):
+                gfx.set_pen(gfx.create_pen_hsv(i*0.02+T*0.01,1,1))
+                drawLineString(letter)
+
+        gfx.set_pen(WHITE)
+        gfx.text(DURATION, 0,0, fixed_width=1,scale=1)
+        debugPrintScript()
+        gfx.update()
+        T=T+1
+        
+        TIMER_COUNT += ticks_cpu()-timestamp
+        TIMER_N += 1
+        if TIMER_N == TIMER_SAMPLES:
+            DURATION=str(TIMER_COUNT/TIMER_SAMPLES)
+            TIMER_N=0
+            TIMER_COUNT=0
+
+# gfx_thread()
+
+_thread.start_new_thread(gfx_thread, ())
+
+musicPlayer = MusicPlayer()
+musicPlayer.run(0.06)
+

@@ -152,5 +152,5 @@ class MusicPlayer:
                 self.iRow=0
                 self.iPattern=(self.iPattern+1)%len(self.patterns)
                 
-musicPlayer = MusicPlayer()
-musicPlayer.run(.06)
+# musicPlayer = MusicPlayer()
+# musicPlayer.run(.06)
