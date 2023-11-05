@@ -49,7 +49,7 @@ class MusicChannel:
             # (0) note
             # (1) Optional- modifier (a for arp)
             # (2) Number string
-            noteDef = re.search("^(\wS?\d)(?::(a)(\d+))?$", noteRaw)
+            noteDef = re.search("^(\wS?\d)(?::(a)(\w+))?$", noteRaw)
             noteDefMatch=noteDef.groups()
             note=noteDefMatch[0]
             
@@ -64,7 +64,7 @@ class MusicChannel:
                 self.arpRing = [TONES_LIST[baseNoteIndex]]
                 for arpInc in noteDefMatch[2]:
                     # Fill the rest of the arp slots
-                    self.arpRing += [TONES_LIST[baseNoteIndex+int(arpInc)]]
+                    self.arpRing += [TONES_LIST[baseNoteIndex+int("0x"+arpInc)]]
                 self.iArpRing = 0
             self.channel.volume(self.volume)
 
@@ -90,28 +90,29 @@ class MusicPlayer:
             MusicChannel(0, {
                 "waveforms": Channel.SINE | Channel.TRIANGLE,
                 "attack": 0.1, "decay": 0.01, "sustain": 0.1, "release": 2,
-                "volume": .2
+                "volume": .6
             }), MusicChannel(1, {
                 "waveforms": Channel.SINE,
                 "attack": 0.1, "decay": 0.1, "sustain": 0.1, "release": 0.1,
-                "volume": .2
+                "volume": 1
             }), MusicChannel(2, {
                 "waveforms": Channel.NOISE,
                 "attack": 0.0, "decay": 0.1, "sustain": 0.0, "release": 0,
-                "volume": .2
+                "volume": .5
             })
         ]
         
+        # :a(X+) Arpeggio (through hexidecimal values)
         phrases = {
             "empty": ["", "", "", "", "", "", "", ""],
-            "lead1": ["C4:a47", "", "", "", "", "", "", ""],
-            "lead2": ["D4:a47", "", "", "", "", "", "", ""],
+            "lead1": ["C5:a47", "", "D5:a47", "", "G5:a47", "", "F5:a47", ""],
+            "lead2": ["D4", "", "D5", "", "", "", "G4", ""],
             "lead3": ["E4:a37", "", "", "", "", "", "", ""],
             "lead4": ["C4:a47", "", "", "", "", "", "", "-"],
-            "bass1": ["C2", "", "C3", "", "C2", "", "C3", ""],
-            "bass2": ["D2", "", "G3", "", "C2", "", "G3", ""],
-            "beats1": ["C7", "", "", "", "", "", "", ""],
-            "beats2": ["C7", "", "", "C8", "", "", "", ""],
+            "bass1": ["C2", "", "C1", "", "C2", "", "C3", ""],
+            "bass2": ["D2", "", "G1", "", "C3", "", "G3", ""],
+            "beats1": ["C3", "", "", "", "C3", "", "", ""],
+            "beats2": ["", "", "C7", "", "C8", "", "", ""],
         }
               
         self.patterns=[]
@@ -133,7 +134,7 @@ class MusicPlayer:
         self.patterns[0][2].extend(phrases["beats2"])
         
     def run(self, waitTime):
-        arpsPerRow = 3
+        arpsPerRow = 4
         synth.play()
 
         while True:
@@ -152,4 +153,4 @@ class MusicPlayer:
                 self.iPattern=(self.iPattern+1)%len(self.patterns)
                 
 musicPlayer = MusicPlayer()
-musicPlayer.run(.07)
+musicPlayer.run(.06)
