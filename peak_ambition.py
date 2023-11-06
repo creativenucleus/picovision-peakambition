@@ -4,10 +4,12 @@ from time import ticks_cpu
 import random
 import _thread
 from jtruk_music_player import MusicPlayer
-from jtruk_3d import jtruk3DModelBoxLines, jtruk3DSetGfx
+from jtruk_3d import jtruk3DSetGfx, makeV, jtruk3DModelBoxLines, jtruk3DModelIcosahedron
+from jtruk_3d_picovision import jtruk3DModelPicovision
 
 gfx=PicoGraphics(pen_type=PEN_RGB555, width=320, height=240)
 WIDTH,HEIGHT=gfx.get_bounds()
+DISPLAY={'xmid': WIDTH/2, 'ymid': HEIGHT/2, 'scale': 100}
 tau=pi*2
 WHALF=int(WIDTH/2)
 HHALF=int(HEIGHT/2)
@@ -19,106 +21,8 @@ T=0
 jtruk3DSetGfx(gfx)
 
 box=jtruk3DModelBoxLines()
-
-def clamp(v,min,max):
-    if v<=min:
-        return min
-    if v>=max:
-        return max
-    return v    
-
-def makeP(x, y, z):
-    return {'x': x, 'y': y, 'z': z}
-
-def rotX(p,a):
-    return {'x':p['x'], 'y':p['y']*cos(a)-p['z']*sin(a), 'z':p['y']*sin(a)+p['z']*cos(a)}
-
-def rotY(p,a):
-    return {'x': p['x']*cos(a)-p['z']*sin(a), 'y':p['y'], 'z':p['x']*sin(a)+p['z']*cos(a)}
-
-def rotZ(p,a):
-    return {'x': p['x']*cos(a)-p['y']*sin(a), 'y':p['x']*sin(a)+p['y']*cos(a), 'z':p['z']}
-
-def trans(p,x,y,z):
-    return {'x': p['x']+x, 'y': p['y']+y, 'z': p['z']+z}
-
-# Translate in place
-def transM(points, x,y,z):
-    for p in points:
-        p['x'] += x
-        p['y'] += y
-        p['z'] += z
-    return points
-
-# Scale in place...
-def scaleM(points,sX,sY,sZ):
-    for p in points:
-        p['x'] *= sX
-        p['y'] *= sY
-        p['z'] *= sZ
-    return points
-
-def project(p):
-    zF=7-p['z']/1.5
-    return [floor(WHALF+(p['x']/zF)*100),floor(HHALF+(p['y']/zF)*(WHALF/HHALF)*100),p['z']/zF]
-
-def makeLetter(letter):
-    if letter=='P':
-        return (
-            [makeP(-1,1,0), makeP(-1,-1,0), makeP(0,-1,0)] +
-            transM(scaleM(getPointsArc(8,pi*2.5,pi*1.5),1,.5,1),0,-.5,0) +
-            [makeP(-1,0,0)]
-        )
-    elif letter=='I':
-        return [makeP(0,-1,0),makeP(0,1,0)]
-    elif letter=='C':
-        return getPointsArc(12,pi*.25,pi*2-pi*.25)
-    elif letter=='O':
-        return getPointsArc(16,0,pi*2)
-    elif letter=='V':
-        return [makeP(-1,-1,0),makeP(0,1,0),makeP(1,-1,0)]
-    if letter=='S':
-        return (
-            transM(scaleM(getPointsArc(8,0,pi*1.5),1,.5,1),0,-.5,0) +
-            transM(scaleM(getPointsArc(8,pi*.5,-pi*1),1,.5,1),0,.5,0)
-        )
-    elif letter=='N':
-        return [makeP(-1,1,0),makeP(-1,-1,0),makeP(1,1,0),makeP(1,-1,0)]
-
-def getPointsArc(nPoints,a0,a1):
-    points=[]
-    for a in range(nPoints+1):
-        a=a0+(a/(nPoints))*(a1-a0)
-        x=cos(a)
-        y=-sin(a)
-        points.append(makeP(x,y,0))
-    return points
-    
-
-def drawLineString(points):
-    global CAM
-    for i,p in enumerate(points):
-        p={'x': p['x']-CAM['x'], 'y': p['y']-CAM['y'], 'z': p['z']-CAM['z']}
-        pProj=project(rotZ(rotX(p,sin(T*0.08)), sin(T*0.07)*.2))
-        if i>0:
-            gfx.line(pProj[0],pProj[1],pProjLast[0],pProjLast[1],2)
-        pProjLast=pProj
-
-LETTERS=[
-    transM(makeLetter('P'), 0, 0, 0),
-    transM(makeLetter('I'), 1.5, 0, 0),
-    transM(makeLetter('C'), 3, 0, 0),
-    transM(makeLetter('O'), 5, 0, 0),
-    transM(makeLetter('V'), 7, 0, 0),
-    transM(makeLetter('I'), 8.5, 0, 0),
-    transM(makeLetter('S'), 10, 0, 0),
-    transM(makeLetter('I'), 11.5, 0, 0),
-    transM(makeLetter('O'), 13, 0, 0),
-    transM(makeLetter('N'), 15.5, 0, 0),
-]
-
-for l in LETTERS:
-    transM(l, 7.78, 0, 0)
+icosahedron=jtruk3DModelIcosahedron()
+picovision=jtruk3DModelPicovision()
 
 def effect2I(lerpPos, tweenPos):
     baseA=sin(lerpPos*10)*2
@@ -148,18 +52,6 @@ def effect2I(lerpPos, tweenPos):
             gfx.set_pen(gfx.create_pen_hsv(0.75+cshift,1,cosa*.5+.5))
             gfx.pixel_span(x3,yline,x0-x3)
 
-def getNormal(p1,p2,p3):
-    vecA={'x': p2['x']-p1['x'], 'y': p2['y']-p1['y'], 'z': p2['z']-p1['z']}
-    vecB={'x': p3['x']-p1['x'], 'y': p3['y']-p1['y'], 'z': p3['z']-p1['z']}
-    return {
-        'x': vecA['y'] * vecB['z'] - vecA['z'] * vecB['y'],
-        'y': vecA['z'] * vecB['x'] - vecA['x'] * vecB['z'],
-        'z': vecA['x'] * vecB['y'] - vecA['y'] * vecB['x']
-    }
-
-def getDotProduct(v1,v2):
-    return v1['x']*v2['x'] + v1['y']*v2['y'] + v1['z']*v2['z']
-
 VARS_3C={
     'x': 0,
     'y': -1,
@@ -175,24 +67,10 @@ VARS_3C={
     'triangles': [],
 }
 
-xp=.52573
-zp=.85065
-np=0        
-VARS_3C['vertices']=[
-    makeP(-xp,np,zp), makeP(xp,np,zp), makeP(-xp,np,-zp), makeP(xp,np,-zp),
-    makeP(np,zp,xp), makeP(np,zp,-xp), makeP(np,-zp,xp), makeP(np,-zp,-xp),
-    makeP(zp,xp,np), makeP(-zp,xp,np), makeP(zp,-xp,np), makeP(-zp,-xp,np)
-]
-     
-VARS_3C['triangles']=[
-    [0,4,1], [0,9,4], [9,5,4], [4,5,8], [4,8,1],
-    [8,10,1], [8,3,10], [5,3,8], [5,2,3], [2,7,3],
-    [7,10,3], [7,6,10], [7,11,6], [11,0,6], [0,1,6],
-    [6,1,10], [9,0,11], [9,11,2], [9,2,5], [7,2,11]
-]
 
 def effect3C(lerpPos, tweenPos):
-    tverts=[]
+    global DISPLAY
+
     rX,rY,rZ=lerpPos*19,VARS_3C['rx'],VARS_3C['rz']
     VARS_3C['x']+=VARS_3C['dx']
     VARS_3C['y']+=VARS_3C['dy']
@@ -207,27 +85,11 @@ def effect3C(lerpPos, tweenPos):
     if VARS_3C['z'] < -1 or VARS_3C['z'] > 1:
         VARS_3C['dz']=-VARS_3C['dz']
         VARS_3C['drx']=-VARS_3C['drx']
-    VARS_3C['dy']+=.01
+    VARS_3C['dy']+=.02
     VARS_3C['rx']+=VARS_3C['drx']
     VARS_3C['rz']+=VARS_3C['drz']
+    icosahedron.draw(gfx, DISPLAY, [rX, rY, rZ], [VARS_3C['x'],VARS_3C['y'],5+VARS_3C['z']], None, T)
 
-    for nvert,vert in enumerate(VARS_3C['vertices']):
-        movedP = trans(rotZ(rotY(rotX(vert,rX),rY),rZ),VARS_3C['x'],VARS_3C['y'],5+VARS_3C['z'])
-        tverts.append({
-            'p': movedP,
-            'pp': project(movedP)
-        })
-        
-    lightVector={'x': 0, 'y': 0.77, 'z': 0.77}
-    
-    for ntri,tri in enumerate(VARS_3C['triangles']):
-        p1,p2,p3=tverts[tri[0]], tverts[tri[1]], tverts[tri[2]]
-        normal=getNormal(p1['p'],p2['p'],p3['p'])
-        culling=getDotProduct(normal,{'x': 0, 'y': 0, 'z': 1})
-        if culling>=0:
-            lightStrength=clamp(getDotProduct(normal,lightVector)*.7,0,1)
-            gfx.set_pen(gfx.create_pen_hsv(ntri/len(VARS_3C['triangles']),1,clamp(lightStrength*p2['pp'][2]/2,0,1)))
-            gfx.triangle(p1['pp'][0],p1['pp'][1], p2['pp'][0],p2['pp'][1], p3['pp'][0],p3['pp'][1])
 
 def effect4O(lerpPos, tweenPos):
     for iD in range(10):
@@ -286,33 +148,31 @@ def effect8I(lerpPos, tweenPos):
             gfx.pixel_span(0,yline,WIDTH)
 
 SCRIPT=[
-    {'action':"effect", 'fn':effect3C, 'duration': 200, 'legend': "Icosahedron", 'detail': "With basic face lighting"},
-    {'action':"effect", 'fn':effect4O, 'duration': 200, 'legend': "Dot Tunnel", 'detail': ""},
-    {'action':"effect", 'fn':effect7S, 'duration': 200, 'legend': "Bobs", 'detail': ""},
-    {
-        'action':"effect", 'fn':effect2I, 'duration': 200, 'legend': "Twister",
-        'detail': "What an amazing effect\nDoes this spread over two lines?"
-    },
-    {'action':"move", 'letter':0},
+    {'action':"move", 'letter':0, 'rz': pi/2},
+    {'action':"move", 'letter':1, 'rz': 0},
+#    {'action':"effect", 'fn':effect2I, 'duration': 100, 'legend': "Twister", 'detail': "What an amazing effect\nDoes this spread over two lines?"},
+    {'action':"move", 'letter':2, 'rz': -pi/2},
+#    {'action':"effect", 'fn':effect3C, 'duration': 100, 'legend': "Icosahedron", 'detail': "With basic face lighting"},
+#    {'action':"effect", 'fn':effect7S, 'duration': 100, 'legend': "Bobs", 'detail': ""},
 #    {'action':"effect", 'fn':effect5V, 'duration': 400, 'legend': "Bounces", 'detail': ""},
-    {'action':"move", 'letter':1},
-    {'action':"move", 'letter':3},
-    {'action':"move", 'letter':4},
-    {'action':"move", 'letter':5},
-    {'action':"effect", 'fn':effect6I, 'duration': 200, 'legend': "Alcatraz bars", 'detail': ""},
-    {'action':"move", 'letter':6},
-    {'action':"move", 'letter':7},
-    {'action':"effect", 'fn':effect8I, 'duration': 200, 'legend': "Raster bars", 'detail': ""},
-    {'action':"move", 'letter':8},
-    {'action':"move", 'letter':9},
+    {'action':"move", 'letter':3, 'rz': -pi},
+#    {'action':"effect", 'fn':effect4O, 'duration': 100, 'legend': "Dot Tunnel", 'detail': ""},
+    {'action':"move", 'letter':4, 'rz': 0},
+    {'action':"move", 'letter':5, 'rz': 0},
+#    {'action':"effect", 'fn':effect6I, 'duration': 100, 'legend': "Alcatraz bars", 'detail': ""},
+    {'action':"move", 'letter':6, 'rz': -pi/2},
+    {'action':"move", 'letter':7, 'rz': -pi},
+#    {'action':"effect", 'fn':effect8I, 'duration': 100, 'legend': "Raster bars", 'detail': ""},
+    {'action':"move", 'letter':8, 'rz': -pi/2},
+    {'action':"move", 'letter':9, 'rz': -pi/4},
 ]
 SCRIPT_POS=-1
 SCRIPT_ACTION_CAP=50
 SCRIPT_ACTION_T=SCRIPT_ACTION_CAP
 SCRIPT_ITEM=None
-CAM=makeP(0,0,0)
-CAM_TWEEN0=makeP(0,0,0)
-CAM_TWEEN1=makeP(0,0,0)
+CAM={'p': makeV(0,0,0), 'rz': 0}
+CAM_TWEEN0={'p': makeV(0,0,0), 'rz': 0}
+CAM_TWEEN1={'p': makeV(0,0,0), 'rz': 0}
 
 def doScript():
     global SCRIPT, SCRIPT_POS, SCRIPT_ITEM, SCRIPT_ACTION_T, SCRIPT_ACTION_CAP
@@ -330,13 +190,16 @@ def doScript():
     if SCRIPT_ITEM['action'] == "move":
         if SCRIPT_ACTION_T==0:
             CAM_TWEEN0=CAM
-            letter=LETTERS[SCRIPT_ITEM['letter']]
-            CAM_TWEEN1={'x':letter[0]['x'], 'y':0, 'z':0}
-        CAM=makeP(
-            lerp(tweenPos, CAM_TWEEN0['x'], CAM_TWEEN1['x']),
-            lerp(tweenPos, CAM_TWEEN0['y'], CAM_TWEEN1['y']),
-            lerp(tweenPos, CAM_TWEEN0['z'], CAM_TWEEN1['z'])
-        )
+            letter=picovision.getLetterPos(SCRIPT_ITEM['letter'])
+            CAM_TWEEN1={'p': makeV(letter[0][0], 0, -9), 'rz': SCRIPT_ITEM['rz']}
+        CAM={
+            'p': makeV(
+                lerp(tweenPos, CAM_TWEEN0['p'][0], CAM_TWEEN1['p'][0]),
+                lerp(tweenPos, CAM_TWEEN0['p'][1], CAM_TWEEN1['p'][1]),
+                lerp(tweenPos, CAM_TWEEN0['p'][2], CAM_TWEEN1['p'][2]) + sin(tweenPos*pi)*10
+            ),
+            'rz': lerp(tweenPos, CAM_TWEEN0['rz'], CAM_TWEEN1['rz'])
+        }
     elif SCRIPT_ITEM['action'] == "effect":
         SCRIPT_ITEM['fn'](lerpPos, tweenPos)
         if 'legend' in SCRIPT_ITEM:
@@ -367,27 +230,24 @@ def gfx_thread():
     TIMER_COUNT=0
     DURATION=""
     global T
-    display={'xmid': WIDTH/2, 'ymid': HEIGHT/2, 'scale': 100}
     while True:
         timestamp=ticks_cpu()
 
         gfx.set_pen(BLACK)
         gfx.clear()
 
+        """
         for i in range(16):
             x=4*(i%4)-6
             y=4*(i//4)-6
             trans=[x, y, 0]
-            box.draw(display, [sin(i+T/30),cos(T/40),sin(i+T/50)], trans, None)
+            box.draw(gfx, DISPLAY, [sin(i+T/30),cos(T/40),sin(i+T/50)], trans, None, T)
         
         """
         doScript()
 
         if SCRIPT_ITEM['action'] == "move":
-            for i,letter in enumerate(LETTERS):
-                gfx.set_pen(gfx.create_pen_hsv(i*0.02+T*0.01,1,1))
-                drawLineString(letter)
-        """
+            picovision.draw(gfx, DISPLAY, None, [-CAM['p'][0],-CAM['p'][1],-CAM['p'][2]], [0,0,CAM['rz']], T)
 
         gfx.set_pen(WHITE)
         gfx.text(DURATION, 0,0, fixed_width=1,scale=1)
@@ -403,10 +263,10 @@ def gfx_thread():
             TIMER_N=0
             TIMER_COUNT=0
 
-gfx_thread()
+#gfx_thread()
 
-#_thread.start_new_thread(gfx_thread, ())
+_thread.start_new_thread(gfx_thread, ())
 
-#musicPlayer = MusicPlayer()
-#musicPlayer.run(0.06)
+musicPlayer = MusicPlayer()
+musicPlayer.run(0.06)
 
