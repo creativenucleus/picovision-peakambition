@@ -4,7 +4,7 @@ from time import ticks_cpu
 import random
 import _thread
 from jtruk_music_player import MusicPlayer
-from jtruk_3d import jtruk3DModelLines, jtruk3DSetGfx
+from jtruk_3d import jtruk3DModelBoxLines, jtruk3DSetGfx
 
 gfx=PicoGraphics(pen_type=PEN_RGB555, width=320, height=240)
 WIDTH,HEIGHT=gfx.get_bounds()
@@ -16,16 +16,9 @@ WHITE=gfx.create_pen(255, 255, 255)
 RED=gfx.create_pen(255, 0, 0)
 T=0
 
-box=jtruk3DModelLines()
-box.appendVerts([[-1,-1,-1]])
-box.appendVerts([[-1,-1,1]])
-box.appendVerts([[-1,1,-1]])
-box.appendVerts([[-1,1,1]])
-box.appendVerts([[1,-1,-1]])
-box.appendVerts([[1,-1,1]])
-box.appendVerts([[1,1,-1]])
-box.appendVerts([[1,1,1]])
 jtruk3DSetGfx(gfx)
+
+box=jtruk3DModelBoxLines()
 
 def clamp(v,min,max):
     if v<=min:

@@ -1,16 +1,4 @@
-# from math import sin, cos, pi, atan2, sqrt, pow, fmod, floor
-from math import floor, sin, cos
-
-"""
-box.appendVerts([[-1,-1,-1]])
-box.appendVerts([[-1,-1,1]])
-box.appendVerts([[-1,1,-1]])
-box.appendVerts([[-1,1,1]])
-box.appendVerts([[1,-1,-1]])
-box.appendVerts([[1,-1,1]])
-box.appendVerts([[1,1,-1]])
-box.appendVerts([[1,1,1]])
-"""
+from math import floor, sin, cos, pi
 
 GFX=None
 
@@ -22,7 +10,7 @@ class jtruk3DModel:
     def __init__(self):
         self.verts = []
     
-    # [{x, y, z}]
+    # [[x, y, z], [x, y, z]...]
     def appendVerts(self, verts):
         self.verts.extend(verts)
     
@@ -30,21 +18,21 @@ class jtruk3DModel:
     # trans: None or {x,y,z}
     # rot: None or {x,y,z}
     def draw(self, display, rotL, trans, rotW):
-        # Project
         verts = []
         for v in self.verts:
             x, y, z = v[0], v[1], v[2]
 
             # Rotate (optional)
+            a=105
             if rotL != None:
                 if rotL[0] != 0:
-                    sina,cosa=sin(rotL[0]), cos(rotL[0]),
+                    sina,cosa=sin(rotL[0]),cos(rotL[0])
                     y, z = y*cosa-z*sina, y*sina+z*cosa 
                 if rotL[1] != 0:
-                    sina,cosa=sin(rotL[1]), cos(rotL[1]),
+                    sina,cosa=sin(rotL[1]),cos(rotL[1])
                     x, z = x*cosa-z*sina, x*sina+z*cosa
                 if rotL[2] != 0:
-                    sina,cosa=sin(rotL[2]), cos(rotL[2]),
+                    sina,cosa=sin(rotL[2]),cos(rotL[2])
                     x, y = x*cosa-y*sina, x*sina+y*cosa
 
             # Translate (optional)
@@ -77,9 +65,12 @@ class jtruk3DModel:
         raise Exception("There must be a _draw function for this class")
 
 
-class jtruk3DModelLines(jtruk3DModel):
+class jtruk3DModelBoxLines(jtruk3DModel):
     def __init__(self):
         super().__init__() 
+
+        self.appendVerts([[-1,-1,-1], [-1,-1,1], [-1,1,-1], [-1,1,1], [1,-1,-1], [1,-1,1], [1,1,-1], [1,1,1]])
+
         self.lines = [
             [0,1], [0,2], [0,4], [1,5], [1,3], [2,6],
             [2,3], [3,7], [4,5], [4,6], [5,7], [6,7]
