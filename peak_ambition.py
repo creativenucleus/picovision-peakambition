@@ -148,23 +148,23 @@ def effect8I(lerpPos, tweenPos):
             gfx.pixel_span(0,yline,WIDTH)
 
 SCRIPT=[
-    {'action':"move", 'letter':0, 'rz': pi/2},
+    {'action':"move", 'letter':0, 'rz': pi*.5},
     {'action':"move", 'letter':1, 'rz': 0},
 #    {'action':"effect", 'fn':effect2I, 'duration': 100, 'legend': "Twister", 'detail': "What an amazing effect\nDoes this spread over two lines?"},
-    {'action':"move", 'letter':2, 'rz': -pi/2},
+    {'action':"move", 'letter':2, 'rz': -pi*.5},
 #    {'action':"effect", 'fn':effect3C, 'duration': 100, 'legend': "Icosahedron", 'detail': "With basic face lighting"},
 #    {'action':"effect", 'fn':effect7S, 'duration': 100, 'legend': "Bobs", 'detail': ""},
 #    {'action':"effect", 'fn':effect5V, 'duration': 400, 'legend': "Bounces", 'detail': ""},
-    {'action':"move", 'letter':3, 'rz': -pi},
+    {'action':"move", 'letter':3, 'rz': -pi*1.25},
 #    {'action':"effect", 'fn':effect4O, 'duration': 100, 'legend': "Dot Tunnel", 'detail': ""},
     {'action':"move", 'letter':4, 'rz': 0},
-    {'action':"move", 'letter':5, 'rz': 0},
+    {'action':"move", 'letter':5, 'rz': pi},
 #    {'action':"effect", 'fn':effect6I, 'duration': 100, 'legend': "Alcatraz bars", 'detail': ""},
-    {'action':"move", 'letter':6, 'rz': -pi/2},
+    {'action':"move", 'letter':6, 'rz': -pi*.5},
     {'action':"move", 'letter':7, 'rz': -pi},
 #    {'action':"effect", 'fn':effect8I, 'duration': 100, 'legend': "Raster bars", 'detail': ""},
-    {'action':"move", 'letter':8, 'rz': -pi/2},
-    {'action':"move", 'letter':9, 'rz': -pi/4},
+    {'action':"move", 'letter':8, 'rz': -pi*1.75},
+    {'action':"move", 'letter':9, 'rz': -pi*.25},
 ]
 SCRIPT_POS=-1
 SCRIPT_ACTION_CAP=50
@@ -191,7 +191,7 @@ def doScript():
         if SCRIPT_ACTION_T==0:
             CAM_TWEEN0=CAM
             letter=picovision.getLetterPos(SCRIPT_ITEM['letter'])
-            CAM_TWEEN1={'p': makeV(letter[0], letter[1], -9), 'rz': SCRIPT_ITEM['rz']}
+            CAM_TWEEN1={'p': makeV(letter[0], letter[1], -9.25), 'rz': SCRIPT_ITEM['rz']}
         CAM={
             'p': makeV(
                 lerp(tweenPos, CAM_TWEEN0['p'][0], CAM_TWEEN1['p'][0]),
