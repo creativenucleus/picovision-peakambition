@@ -21,18 +21,19 @@ class jtruk3DModelPicovision(jtruk3DModel):
         self.iLetterDef=[]
         for l in self.letters:
             startVert=len(self.verts)
-            self.appendVerts(transV(l, -7.78, 0, 0))
+            transL=transV(l, -7.78, 0, 0)
+            self.appendVerts(transL)
             endVert=len(self.verts)
-            self.iLetterDef.append([startVert, endVert])
+            self.iLetterDef.append({'vs': [startVert, endVert], 'mid': getMidV(transL)})
             
     def getLetterPos(self, i):
-        return self.letters[i]
+        return self.iLetterDef[i]['mid']
         
     def _draw(self, gfx, verts, T):
         gfx.set_pen(gfx.create_pen_hsv(1, 1, 1))
         for vertDef in self.iLetterDef:
             vLast = None
-            for iV in range(vertDef[0],vertDef[1]):
+            for iV in range(vertDef['vs'][0],vertDef['vs'][1]):
                 v = verts[iV]
                 if vLast != None:
                     gfx.set_pen(gfx.create_pen_hsv(iV*0.002+T*0.015,1,1))
@@ -86,3 +87,15 @@ def scaleV(verts, sX,sY,sZ):
         v[1] *= sY
         v[2] *= sZ
     return verts
+
+# Returns the mid point x,y,z
+def getMidV(verts):
+    vMin, vMax = None, None
+
+    for v in verts:
+        if vMin == None:
+            vMin, vMax = v, v
+        else:
+            vMin=makeV(min(vMin[0],v[0]), min(vMin[1],v[1]), min(vMin[2],v[2]))
+            vMax=makeV(max(vMax[0],v[0]), max(vMax[1],v[1]), max(vMax[2],v[2]))
+    return makeV((vMin[0]+vMax[0])/2, (vMin[1]+vMax[1])/2, (vMin[2]+vMax[2])/2)

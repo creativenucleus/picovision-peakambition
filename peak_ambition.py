@@ -191,7 +191,7 @@ def doScript():
         if SCRIPT_ACTION_T==0:
             CAM_TWEEN0=CAM
             letter=picovision.getLetterPos(SCRIPT_ITEM['letter'])
-            CAM_TWEEN1={'p': makeV(letter[0][0], 0, -9), 'rz': SCRIPT_ITEM['rz']}
+            CAM_TWEEN1={'p': makeV(letter[0], letter[1], -9), 'rz': SCRIPT_ITEM['rz']}
         CAM={
             'p': makeV(
                 lerp(tweenPos, CAM_TWEEN0['p'][0], CAM_TWEEN1['p'][0]),
