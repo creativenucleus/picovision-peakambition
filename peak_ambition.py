@@ -3,7 +3,8 @@ from picographics import PicoGraphics, PEN_RGB555
 from time import ticks_cpu
 import random
 import _thread
-from music_player import MusicPlayer
+from jtruk_music_player import MusicPlayer
+from jtruk_3d import jtruk3DModelLines, jtruk3DSetGfx
 
 gfx=PicoGraphics(pen_type=PEN_RGB555, width=320, height=240)
 WIDTH,HEIGHT=gfx.get_bounds()
@@ -14,6 +15,17 @@ BLACK=gfx.create_pen(0, 0, 0)
 WHITE=gfx.create_pen(255, 255, 255)
 RED=gfx.create_pen(255, 0, 0)
 T=0
+
+box=jtruk3DModelLines()
+box.appendVerts([[-1,-1,-1]])
+box.appendVerts([[-1,-1,1]])
+box.appendVerts([[-1,1,-1]])
+box.appendVerts([[-1,1,1]])
+box.appendVerts([[1,-1,-1]])
+box.appendVerts([[1,-1,1]])
+box.appendVerts([[1,1,-1]])
+box.appendVerts([[1,1,1]])
+jtruk3DSetGfx(gfx)
 
 def clamp(v,min,max):
     if v<=min:
@@ -37,6 +49,7 @@ def rotZ(p,a):
 def trans(p,x,y,z):
     return {'x': p['x']+x, 'y': p['y']+y, 'z': p['z']+z}
 
+# Translate in place
 def transM(points, x,y,z):
     for p in points:
         p['x'] += x
@@ -44,6 +57,7 @@ def transM(points, x,y,z):
         p['z'] += z
     return points
 
+# Scale in place...
 def scaleM(points,sX,sY,sZ):
     for p in points:
         p['x'] *= sX
@@ -360,24 +374,35 @@ def gfx_thread():
     TIMER_COUNT=0
     DURATION=""
     global T
+    display={'xmid': WIDTH/2, 'ymid': HEIGHT/2, 'scale': 100}
     while True:
         timestamp=ticks_cpu()
+
         gfx.set_pen(BLACK)
         gfx.clear()
 
+        for i in range(16):
+            x=4*(i%4)-6
+            y=4*(i//4)-6
+            trans=[x, y, 0]
+            box.draw(display, [sin(i+T/30),cos(T/40),sin(i+T/50)], trans, None)
+        
+        """
         doScript()
 
         if SCRIPT_ITEM['action'] == "move":
             for i,letter in enumerate(LETTERS):
                 gfx.set_pen(gfx.create_pen_hsv(i*0.02+T*0.01,1,1))
                 drawLineString(letter)
+        """
 
         gfx.set_pen(WHITE)
         gfx.text(DURATION, 0,0, fixed_width=1,scale=1)
         debugPrintScript()
+
         gfx.update()
         T=T+1
-        
+
         TIMER_COUNT += ticks_cpu()-timestamp
         TIMER_N += 1
         if TIMER_N == TIMER_SAMPLES:
@@ -385,10 +410,10 @@ def gfx_thread():
             TIMER_N=0
             TIMER_COUNT=0
 
-# gfx_thread()
+gfx_thread()
 
-_thread.start_new_thread(gfx_thread, ())
+#_thread.start_new_thread(gfx_thread, ())
 
-musicPlayer = MusicPlayer()
-musicPlayer.run(0.06)
+#musicPlayer = MusicPlayer()
+#musicPlayer.run(0.06)
 
