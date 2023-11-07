@@ -6,6 +6,7 @@ import _thread
 from jtruk_music_player import MusicPlayer
 from jtruk_3d import jtruk3DSetGfx, makeV, jtruk3DModelBoxLines, jtruk3DModelIcosahedron
 from jtruk_3d_picovision import jtruk3DModelPicovision
+from jtruk_effect_landscape import jtrukEffectLandscape
 
 gfx=PicoGraphics(pen_type=PEN_RGB555, width=320, height=240)
 WIDTH,HEIGHT=gfx.get_bounds()
@@ -23,6 +24,10 @@ jtruk3DSetGfx(gfx)
 box=jtruk3DModelBoxLines()
 icosahedron=jtruk3DModelIcosahedron()
 picovision=jtruk3DModelPicovision()
+effectLandscape=jtrukEffectLandscape(6)
+
+def effect1P(lerpPos, tweenPos):
+    effectLandscape.draw(gfx, DISPLAY, None, None, None, T)
 
 def effect2I(lerpPos, tweenPos):
     baseA=sin(lerpPos*10)*2
@@ -148,21 +153,22 @@ def effect8I(lerpPos, tweenPos):
             gfx.pixel_span(0,yline,WIDTH)
 
 SCRIPT=[
-    {'action':"move", 'letter':0, 'rz': pi*.5},
-    {'action':"move", 'letter':1, 'rz': 0},
-#    {'action':"effect", 'fn':effect2I, 'duration': 100, 'legend': "Twister", 'detail': "What an amazing effect\nDoes this spread over two lines?"},
+    {'action':"effect", 'fn':effect1P, 'duration': 100, 'legend': "Wave Landscape", 'detail': ""},
+    {'action':"move", 'letter':0, 'rz': -pi*.5},
+    {'action':"move", 'letter':1, 'rz': pi},
+    {'action':"effect", 'fn':effect2I, 'duration': 100, 'legend': "Twister", 'detail': "What an amazing effect\nDoes this spread over two lines?"},
     {'action':"move", 'letter':2, 'rz': -pi*.5},
-#    {'action':"effect", 'fn':effect3C, 'duration': 100, 'legend': "Icosahedron", 'detail': "With basic face lighting"},
-#    {'action':"effect", 'fn':effect7S, 'duration': 100, 'legend': "Bobs", 'detail': ""},
-#    {'action':"effect", 'fn':effect5V, 'duration': 400, 'legend': "Bounces", 'detail': ""},
+    {'action':"effect", 'fn':effect3C, 'duration': 100, 'legend': "Icosahedron", 'detail': "With basic face lighting"},
     {'action':"move", 'letter':3, 'rz': -pi*1.25},
-#    {'action':"effect", 'fn':effect4O, 'duration': 100, 'legend': "Dot Tunnel", 'detail': ""},
+    {'action':"effect", 'fn':effect4O, 'duration': 100, 'legend': "Dot Tunnel", 'detail': ""},
     {'action':"move", 'letter':4, 'rz': 0},
+    {'action':"effect", 'fn':effect5V, 'duration': 100, 'legend': "Bounces", 'detail': ""},
     {'action':"move", 'letter':5, 'rz': pi},
-#    {'action':"effect", 'fn':effect6I, 'duration': 100, 'legend': "Alcatraz bars", 'detail': ""},
+    {'action':"effect", 'fn':effect6I, 'duration': 100, 'legend': "Alcatraz bars", 'detail': ""},
     {'action':"move", 'letter':6, 'rz': -pi*.5},
-    {'action':"move", 'letter':7, 'rz': -pi},
-#    {'action':"effect", 'fn':effect8I, 'duration': 100, 'legend': "Raster bars", 'detail': ""},
+    {'action':"effect", 'fn':effect7S, 'duration': 100, 'legend': "Bobs", 'detail': ""},
+    {'action':"move", 'letter':7, 'rz': -pi*1.5},
+    {'action':"effect", 'fn':effect8I, 'duration': 100, 'legend': "Raster bars", 'detail': ""},
     {'action':"move", 'letter':8, 'rz': -pi*1.75},
     {'action':"move", 'letter':9, 'rz': -pi*.25},
 ]
@@ -244,10 +250,12 @@ def gfx_thread():
             box.draw(gfx, DISPLAY, [sin(i+T/30),cos(T/40),sin(i+T/50)], trans, None, T)
         
         """
-        doScript()
 
-        if SCRIPT_ITEM['action'] == "move":
+        #if SCRIPT_ITEM['action'] == "move":
+        if True:
             picovision.draw(gfx, DISPLAY, None, [-CAM['p'][0],-CAM['p'][1],-CAM['p'][2]], [0,0,CAM['rz']], T)
+
+        doScript()
 
         gfx.set_pen(WHITE)
         gfx.text(DURATION, 0,0, fixed_width=1,scale=1)

@@ -1,5 +1,5 @@
-from jtruk_3d import jtruk3DModel, makeV
-from math import sin, cos, pi
+from jtruk_3d import jtruk3DModel, makeV, clamp
+from math import sin, cos, pi, sqrt
 
 class jtruk3DModelPicovision(jtruk3DModel):
     def __init__(self):
@@ -37,7 +37,12 @@ class jtruk3DModelPicovision(jtruk3DModel):
                 v = verts[iV]
                 if vLast != None:
                     gfx.set_pen(gfx.create_pen_hsv(iV*0.002+T*0.015,1,1))
-                    gfx.line(v['pp'][0],v['pp'][1],vLast['pp'][0],vLast['pp'][1],2)
+                    gfx.line(
+                        v['pp'][0],
+                        v['pp'][1],
+                        vLast['pp'][0],
+                        vLast['pp'][1],int(sqrt(clamp(v['pp'][2]*4,4,16)))
+                    )
                 vLast=v
 
 def makeLetter(letter):
