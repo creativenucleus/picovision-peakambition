@@ -7,6 +7,7 @@ from jtruk_music_player import MusicPlayer
 from jtruk_3d import jtruk3DSetGfx, makeV, jtruk3DModelBoxLines, jtruk3DModelIcosahedron
 from jtruk_3d_picovision import jtruk3DModelPicovision
 from jtruk_effect_landscape import jtrukEffectLandscape
+from jtruk_music_track import track
 
 gfx=PicoGraphics(pen_type=PEN_RGB555, width=320, height=240)
 WIDTH,HEIGHT=gfx.get_bounds()
@@ -242,20 +243,11 @@ def gfx_thread():
         gfx.set_pen(BLACK)
         gfx.clear()
 
-        """
-        for i in range(16):
-            x=4*(i%4)-6
-            y=4*(i//4)-6
-            trans=[x, y, 0]
-            box.draw(gfx, DISPLAY, [sin(i+T/30),cos(T/40),sin(i+T/50)], trans, None, T)
-        
-        """
-
-        #if SCRIPT_ITEM['action'] == "move":
-        if True:
-            picovision.draw(gfx, DISPLAY, None, [-CAM['p'][0],-CAM['p'][1],-CAM['p'][2]], [0,0,CAM['rz']], T)
-
         doScript()
+
+        if SCRIPT_ITEM['action'] == "move":
+            picovision.draw(gfx, DISPLAY, None, [-CAM['p'][0],-CAM['p'][1],-CAM['p'][2]], [0,0,CAM['rz']], T)
+        #if True:
 
         gfx.set_pen(WHITE)
         gfx.text(DURATION, 0,0, fixed_width=1,scale=1)
@@ -271,10 +263,11 @@ def gfx_thread():
             TIMER_N=0
             TIMER_COUNT=0
 
+# For debugging
 #gfx_thread()
 
+# With music
 _thread.start_new_thread(gfx_thread, ())
-
-musicPlayer = MusicPlayer()
-musicPlayer.run(0.06)
+musicPlayer = MusicPlayer(track, .07, 6)
+musicPlayer.play()
 
