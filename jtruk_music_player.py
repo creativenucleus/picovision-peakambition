@@ -1,6 +1,7 @@
 from picosynth import PicoSynth, Channel
 from time import sleep
 from collections import OrderedDict
+from math import pow, sin, pi
 import re
 
 synth = PicoSynth()
@@ -31,56 +32,75 @@ class MusicChannel:
         self.channel.configure(**conf)
         
         # We'll either have none for both of these, or a note, or an arpRing list
-        self.note = None
+        self.baseFreq = None
+        self.triggerAttack = False
+        self.triggerRelease = False
+
         self.arpRing = None
-        self.iArpRing = 0
+        self.iArpRing = None
+
+        self.vibratoAmp = None
+        self.iVibrato = None
+        self.nVibrato = None
 
     def decode(self, noteRaw):
-        if noteRaw == "":
-            # no effect
-            True
-        elif noteRaw == "-":
+        cellSplit = noteRaw.split(":")
+        note = cellSplit[0]
+        
+        if note == "-":
             # stop sound
-            self.note = None
-            self.arpRing = None
-            self.channel.trigger_attack()
-        else:
+            self.triggerRelease = True
+
+        elif note != "":
+            self.baseFreq = TONES[note]
+            self.triggerAttack = True
+        
+        for iPart in range(1, len(cellSplit)):
             # The regex will capture:
-            # (0) note
+            # (0) note (optional)
             # (1) Optional- modifier (a for arp)
             # (2) Number string
-            noteDef = re.search("^(\wS?\d)(?::(a)(\w+))?$", noteRaw)
-            noteDefMatch=noteDef.groups()
-            note=noteDefMatch[0]
-            
-            self.note = None
-            self.arpRing = None
-            if noteDefMatch[1] == None:
-                self.note = note
-            elif noteDefMatch[1] == 'a': # We have an arp!
-                baseNoteIndex=TONES_LIST.index(note)
-                # Our arp will hit note 0, then whatever else we've specified, and then loop
-                # Add the baseNote index to each of our arpRingOffsets
-                self.arpRing = [TONES_LIST[baseNoteIndex]]
-                for arpInc in noteDefMatch[2]:
-                    # Fill the rest of the arp slots
-                    self.arpRing += [TONES_LIST[baseNoteIndex+int("0x"+arpInc)]]
+            noteCtrl = re.search("^(\w)(\w+)?$", cellSplit[iPart])
+            noteCtrlMatch=noteCtrl.groups()
+            if noteCtrlMatch[0] == 'a':
+                # Arp
+                self.arpRing = [0]
+                for arpOffset in noteCtrlMatch[1]:	# Fill the rest of the arp slots
+                    self.arpRing += [int("0x"+arpOffset)]
                 self.iArpRing = 0
-            self.channel.volume(self.volume)
-
+            elif noteCtrlMatch[0] == 'v':
+                # Vibrato
+                self.vibratoAmp = int("0x"+noteCtrlMatch[1][0])
+                self.nVibrato = int("0x"+noteCtrlMatch[1][1])
+                self.iVibrato = 0
+            elif noteCtrlMatch[0] == 'l':
+                # Loudness (v is taken!)
+                self.volume = int("0x"+noteCtrlMatch[1][0])/15.0
+            
     def playSlot(self, iSlot):
-        if self.note:
-            if iSlot == 0:
-                self._triggerSound(self.note)
-                self.note = None	# Notes just fire once
-        elif self.arpRing != None:
-            self._triggerSound(self.arpRing[self.iArpRing%len(self.arpRing)])
+        freq = self.baseFreq
+
+        # Effects
+        if self.arpRing != None:
+            arpOffset = self.arpRing[self.iArpRing%len(self.arpRing)]
+            freq *= pow(1.0595, arpOffset)
             self.iArpRing += 1
 
-    def _triggerSound(self, tone):
-        self.channel.frequency(TONES[tone])
-        self.channel.trigger_attack()
+        if self.vibratoAmp != None and self.nVibrato >= 1:
+            # Not sure if +1 is right, or if it should be +2
+            freq += sin(pi*2*self.iVibrato/(self.nVibrato+1))*self.vibratoAmp
+            self.iVibrato += 1
 
+        self.channel.frequency(int(freq))
+        self.channel.volume(self.volume)
+
+        if self.triggerAttack:
+            self.channel.trigger_attack()
+            self.triggerAttack = False
+        if self.triggerRelease:
+            self.channel.trigger_release()
+            self.triggerRelease = False
+            
 class MusicPlayer:
     def __init__(self):
         self.iPattern = 0
@@ -89,7 +109,7 @@ class MusicPlayer:
         self.channels = [
             MusicChannel(0, {
                 "waveforms": Channel.SINE | Channel.TRIANGLE,
-                "attack": 0.1, "decay": 0.01, "sustain": 0.1, "release": 2,
+                "attack": 0.1, "decay": 0.01, "sustain": 0.1, "release": .2,
                 "volume": .6
             }), MusicChannel(1, {
                 "waveforms": Channel.SINE,
@@ -102,10 +122,15 @@ class MusicPlayer:
             })
         ]
         
-        # :a(X+) Arpeggio (through hexidecimal values)
+        # C4		Start note (attack) e.g. C, 4th Octave
+        #  -		Stop note (release)
+        # :a(xyz+)	Arpeggio (through hexidecimal values)
+        # :l(x)		Loudness (0-15) - beware clicks if this is changed mid-note play!
+        # :v(xy)	Vibrato (depth, speed)
         phrases = {
             "empty": ["", "", "", "", "", "", "", ""],
-            "lead1": ["C5:a47", "", "D5:a47", "", "G5:a47", "", "F5:a47", ""],
+            "lead1": ["A4:a37:lf", "", ":l4", "", ":l2", "-", "", ""],
+            "llead1": ["C5:a47", "", "D5:a47", "", "G5:a47", "", "F5:a47", ""],
             "lead2": ["D4", "", "D5", "", "", "", "G4", ""],
             "lead3": ["E4:a37", "", "", "", "", "", "", ""],
             "lead4": ["C4:a47", "", "", "", "", "", "", "-"],
@@ -116,13 +141,17 @@ class MusicPlayer:
         }
               
         self.patterns=[]
-        self.patterns.append([[],[],[]])
+        self.patterns.append([[]]) #,[],[]])
         
         self.patterns[0][0].extend(phrases["lead1"])
-        self.patterns[0][0].extend(phrases["lead2"])
-        self.patterns[0][0].extend(phrases["lead3"])
-        self.patterns[0][0].extend(phrases["lead4"])
+        self.patterns[0][0].extend(phrases["empty"])
+        self.patterns[0][0].extend(phrases["empty"])
+        self.patterns[0][0].extend(phrases["empty"])
+        #self.patterns[0][0].extend(phrases["lead2"])
+        #self.patterns[0][0].extend(phrases["lead3"])
+        #self.patterns[0][0].extend(phrases["lead4"])
 
+        """
         self.patterns[0][1].extend(phrases["bass1"])
         self.patterns[0][1].extend(phrases["bass1"])
         self.patterns[0][1].extend(phrases["bass2"])
@@ -132,25 +161,27 @@ class MusicPlayer:
         self.patterns[0][2].extend(phrases["beats2"])
         self.patterns[0][2].extend(phrases["beats1"])
         self.patterns[0][2].extend(phrases["beats2"])
+        """
         
     def run(self, waitTime):
-        arpsPerRow = 4
+        nChannels = 1
+        stepsPerRow = 4
         synth.play()
 
         while True:
-            for iCh in range(3):
-                noteRaw = self.patterns[self.iPattern][iCh][self.iRow]
-                self.channels[iCh].decode(noteRaw)
+            for iCh in range(nChannels):
+                cellRaw = self.patterns[self.iPattern][iCh][self.iRow]
+                self.channels[iCh].decode(cellRaw)
 
-            for i in range(arpsPerRow):
-                for iCh in range(3):
+            for i in range(stepsPerRow):
+                for iCh in range(nChannels):
                     self.channels[iCh].playSlot(i)        
-                sleep(waitTime/arpsPerRow)
+                sleep(waitTime/stepsPerRow)
 
             self.iRow += 1
             if self.iRow>=len(self.patterns[self.iPattern][0]):
                 self.iRow=0
                 self.iPattern=(self.iPattern+1)%len(self.patterns)
                 
-# musicPlayer = MusicPlayer()
-# musicPlayer.run(.06)
+musicPlayer = MusicPlayer()
+musicPlayer.run(.06)
