@@ -2,8 +2,8 @@ from picosynth import PicoSynth, Channel
 from time import sleep
 from collections import OrderedDict
 from math import pow, sin, pi
-from jtruk_music_track import track
 import re
+import jtruk_thread_vars
 
 synth = PicoSynth()
 
@@ -113,12 +113,11 @@ class MusicChannel:
 # :a(xyz+)	Arpeggio (through hexidecimal values)
 # :l(x)		Loudness (0-15) - beware clicks if this is changed mid-note play!
 # :v(xy)	Vibrato (depth, speed)
-
 class MusicPlayer:
-    def __init__(self, patterns, rowTime, stepsPerRow):
-        self.patterns = patterns
-        self.rowTime = rowTime
-        self.stepsPerRow = stepsPerRow
+    def __init__(self, tune):
+        self.patterns = tune["patterns"]
+        self.rowInterval = tune["rowInterval"]
+        self.stepsPerRow = tune["stepsPerRow"]
 
         self.iPattern = 0
         self.iRow = 0
@@ -139,13 +138,19 @@ class MusicPlayer:
             })
         ]
         
-    # rowTime is the time step between rows
+    # rowInterval is the time step between rows
     # stepsPerRow affects arp and vibrato
     def play(self):
+        while True:
+            if jtruk_thread_vars.MUSIC_IN_ACTION == "play":
+                break
+
         nChannels = len(self.patterns[0])
         synth.play()
 
         while True:
+            jtruk_thread_vars.MUSIC_OUT_ROW = self.iRow
+
             for iCh in range(nChannels):
                 cellRaw = self.patterns[self.iPattern][iCh][self.iRow]
                 self.channels[iCh].decode(cellRaw)
@@ -153,12 +158,9 @@ class MusicPlayer:
             for i in range(self.stepsPerRow):
                 for iCh in range(nChannels):
                     self.channels[iCh].playSlot(i)        
-                sleep(self.rowTime/self.stepsPerRow)
+                sleep(self.rowInterval/self.stepsPerRow)
 
             self.iRow += 1
             if self.iRow>=len(self.patterns[self.iPattern][0]):
                 self.iRow=0
                 self.iPattern=(self.iPattern+1)%len(self.patterns)
-
-# musicPlayer = MusicPlayer(track, .06, 3)
-# musicPlayer.play()

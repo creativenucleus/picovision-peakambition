@@ -7,7 +7,8 @@ from jtruk_music_player import MusicPlayer
 from jtruk_3d import jtruk3DSetGfx, makeV, jtruk3DModelBoxLines, jtruk3DModelIcosahedron
 from jtruk_3d_picovision import jtruk3DModelPicovision
 from jtruk_effect_landscape import jtrukEffectLandscape
-from jtruk_music_track import track
+from jtruk_tune_main import tune as main_tune
+import jtruk_thread_vars
 
 gfx=PicoGraphics(pen_type=PEN_RGB555, width=320, height=240)
 WIDTH,HEIGHT=gfx.get_bounds()
@@ -154,7 +155,7 @@ def effect8I(lerpPos, tweenPos):
             gfx.pixel_span(0,yline,WIDTH)
 
 SCRIPT=[
-    {'action':"effect", 'fn':effect1P, 'duration': 100, 'legend': "Wave Landscape", 'detail': ""},
+#    {'action':"effect", 'fn':effect1P, 'duration': 100, 'legend': "Wave Landscape", 'detail': ""},
     {'action':"move", 'letter':0, 'rz': -pi*.5},
     {'action':"move", 'letter':1, 'rz': pi},
     {'action':"effect", 'fn':effect2I, 'duration': 100, 'legend': "Twister", 'detail': "What an amazing effect\nDoes this spread over two lines?"},
@@ -181,6 +182,7 @@ CAM={'p': makeV(0,0,0), 'rz': 0}
 CAM_TWEEN0={'p': makeV(0,0,0), 'rz': 0}
 CAM_TWEEN1={'p': makeV(0,0,0), 'rz': 0}
 
+# return lerpPos and tweenPos
 def doScript():
     global SCRIPT, SCRIPT_POS, SCRIPT_ITEM, SCRIPT_ACTION_T, SCRIPT_ACTION_CAP
     global CAM, CAM_TWEEN0, CAM_TWEEN1
@@ -219,7 +221,7 @@ def doScript():
             gfx.set_pen(WHITE)
             gfx.text(SCRIPT_ITEM['legend'], x,y)
             gfx.text(SCRIPT_ITEM['detail'], xl,yl, scale=1)
-        
+    return lerpPos, tweenPos
 
 def debugPrintScript():
     global SCRIPT_POS, SCRIPT_ACTION_T
@@ -230,27 +232,50 @@ def lerp(t,v1,v2):
 
 def smoothStep(t):
     return t * t * (3.0 - 2.0 * t)
-    
-def gfx_thread():
+
+def rampUpThenDown(t):
+    if t<.2:
+        return t/.2
+    elif t>.8:
+        return (1-t)/.2
+    else:
+        return 1
+
+def mainDemo():
     TIMER_SAMPLES=10
     TIMER_N=0
     TIMER_COUNT=0
     DURATION=""
+    LAST_PICOVISION_LINES=[]
+    LAST_PICOVSION_LETTER=0
     global T
+    jtruk_thread_vars.MUSIC_IN_ACTION = "play"
     while True:
         timestamp=ticks_cpu()
 
         gfx.set_pen(BLACK)
         gfx.clear()
 
-        doScript()
-
+        lerpPos, _ = doScript()
+        otherIntensity = rampUpThenDown(lerpPos)
         if SCRIPT_ITEM['action'] == "move":
-            picovision.draw(gfx, DISPLAY, None, [-CAM['p'][0],-CAM['p'][1],-CAM['p'][2]], [0,0,CAM['rz']], T)
-        #if True:
+            focusLetter = SCRIPT_ITEM['letter'] if lerpPos > .5 else (SCRIPT_ITEM['letter']-1)%len(picovision.iLetterDef)
+            LAST_PICOVISION_LINES = picovision.draw(
+                gfx, DISPLAY,
+                None,
+                [-CAM['p'][0],-CAM['p'][1],-CAM['p'][2]], [0,0,CAM['rz']],
+                T, {
+                    'focusLetter': focusLetter,
+                    'otherIntensity': otherIntensity
+                }
+            )
+            LAST_PICOVSION_LETTER = SCRIPT_ITEM['letter']
+        else:
+            picovision.drawLines(LAST_PICOVISION_LINES, gfx, LAST_PICOVSION_LETTER, LAST_PICOVSION_LETTER+1)
 
         gfx.set_pen(WHITE)
         gfx.text(DURATION, 0,0, fixed_width=1,scale=1)
+        gfx.text(str(jtruk_thread_vars.MUSIC_OUT_ROW), 30,100, fixed_width=1,scale=1)
         debugPrintScript()
 
         gfx.update()
@@ -263,11 +288,50 @@ def gfx_thread():
             TIMER_N=0
             TIMER_COUNT=0
 
-# For debugging
-#gfx_thread()
+def textScreen(textLines, duration):
+    t = 0
+    while t < duration:
+        gfx.set_pen(BLACK)
+        gfx.clear()
 
-# With music
-_thread.start_new_thread(gfx_thread, ())
-musicPlayer = MusicPlayer(track, .07, 6)
-musicPlayer.play()
+        for i, line in enumerate(textLines):
+            gfx.set_pen(gfx.create_pen_hsv(10+i*.01-t*.005, 1, 1))
+            x, y = 30, i*10
+            gfx.text(line, x,y, fixed_width=1,scale=1)
 
+        gfx.update()
+        t = t + 1
+
+def demo_thread():
+    textScreen([
+        "Welcome here",
+        "This is my demo",
+        "I hope you like it",
+        "It's a bit rough around the edges",
+        "But it's a demo",
+        "So that's ok",
+        "I hope you like it",
+        "I hope you like it",
+        "I hope you like it",
+        "Welcome here",
+        "This is my demo",
+        "I hope you like it",
+        "It's a bit rough around the edges",
+        "But it's a demo",
+        "So that's ok",
+        "I hope you like it",
+        "I hope you like it",
+        "I hope you like it",
+    ], 200)
+
+    mainDemo()
+
+def sfx_thread():
+    musicPlayer = MusicPlayer(main_tune)
+    musicPlayer.play()
+
+def peakAmbition():
+    _thread.start_new_thread(demo_thread, ())
+    sfx_thread()
+
+peakAmbition()

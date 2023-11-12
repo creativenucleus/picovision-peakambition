@@ -6,6 +6,6 @@ class jtrukEffectLandscape():
         for iLine in range(nLines):
             self.lines.append(jtruk3DModelLine(10, iLine/nLines, iLine))
 
-    def draw(self, gfx, display, rotL, trans, rotW, T):
+    def draw(self, gfx, display, rotL, trans, rotW, T, extra):
         for iLine, line in enumerate(self.lines):
             line.draw(gfx, display, rotL, trans, rotW, T)
