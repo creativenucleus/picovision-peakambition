@@ -85,25 +85,26 @@ class MusicChannel:
     def playSlot(self, iSlot):
         freq = self.baseFreq
 
-        # Effects
-        if self.arpRing != None:
-            arpOffset = self.arpRing[self.iStep%len(self.arpRing)]
-            freq *= pow(1.0595, arpOffset)
+        if freq:
+            # Effects
+            if self.arpRing != None:
+                arpOffset = self.arpRing[self.iStep%len(self.arpRing)]
+                freq *= pow(1.0595, arpOffset)
 
-        if self.vibratoAmp != None and self.nVibrato >= 1:
-            freqAmp = (self.vibratoAmp/15)*(.0595 * freq)
-            # Not sure if +1 is right, or if it should be +2
-            freq += sin(pi*2*self.iStep/(self.nVibrato+1))*freqAmp
+            if self.vibratoAmp != None and self.nVibrato >= 1:
+                freqAmp = (self.vibratoAmp/15)*(.0595 * freq)
+                # Not sure if +1 is right, or if it should be +2
+                freq += sin(pi*2*self.iStep/(self.nVibrato+1))*freqAmp
 
-        self.channel.frequency(int(freq))
-        self.channel.volume(self.volume)
+            self.channel.frequency(int(freq))
+            self.channel.volume(self.volume)
 
-        if self.triggerAttack:
-            self.channel.trigger_attack()
-            self.triggerAttack = False
-        if self.triggerRelease:
-            self.channel.trigger_release()
-            self.triggerRelease = False
+            if self.triggerAttack:
+                self.channel.trigger_attack()
+                self.triggerAttack = False
+            if self.triggerRelease:
+                self.channel.trigger_release()
+                self.triggerRelease = False
 
         self.iStep += 1
 
@@ -135,6 +136,10 @@ class MusicPlayer:
                 "waveforms": Channel.NOISE,
                 "attack": 0.0, "decay": 0.1, "sustain": 0.0, "release": 0,
                 "volume": .5
+            }), MusicChannel(3, {
+                "waveforms": Channel.SQUARE | Channel.TRIANGLE,
+                "attack": 0.1, "decay": 0.01, "sustain": 0.1, "release": .2,
+                "volume": .6
             })
         ]
         

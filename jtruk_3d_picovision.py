@@ -15,7 +15,7 @@ class jtruk3DModelPicovision(jtruk3DModel):
             {'vs': transVs(makeLetter('S'), 10, 0, 0), 'o': makeV(0,0,0)},
             {'vs': transVs(makeLetter('I'), 11.5, 0, 0), 'o': makeV(0,0,0)},
             {'vs': transVs(makeLetter('O'), 13, 0, 0), 'o': makeV(0,0,0)},
-            {'vs': transVs(makeLetter('N'), 15.5, 0, 0), 'o': makeV(0,0,0)}
+            {'vs': transVs(makeLetter('N'), 15.5, 0, 0), 'o': makeV(.5,-.5,0)}
         ]
 
         self.iLetterDef=[]
