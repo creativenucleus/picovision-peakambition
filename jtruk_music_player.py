@@ -3,7 +3,7 @@ from time import sleep
 from collections import OrderedDict
 from math import pow, sin, pi
 import re
-import jtruk_thread_vars
+import pa_shared_vars as shared_vars
 
 synth = PicoSynth()
 
@@ -147,14 +147,14 @@ class MusicPlayer:
     # stepsPerRow affects arp and vibrato
     def play(self):
         while True:
-            if jtruk_thread_vars.MUSIC_IN_ACTION == "play":
+            if shared_vars.MUSIC_IN_ACTION == "play":
                 break
 
         nChannels = len(self.patterns[0])
         synth.play()
 
         while True:
-            jtruk_thread_vars.MUSIC_OUT_ROW = self.iRow
+            shared_vars.MUSIC_OUT_ROW = self.iRow
 
             for iCh in range(nChannels):
                 cellRaw = self.patterns[self.iPattern][iCh][self.iRow]

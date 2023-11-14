@@ -11,7 +11,7 @@ class jtruk3DModelLine(jtruk3DModel):
             y = random()*2 - 1	# -1 to 1
             self.appendVerts([makeV(x,y,z)])
         
-    def _draw(self, gfx, verts, T, extra):
+    def _draw(self, gfx, verts, extra):
         gfx.set_pen(gfx.create_pen_hsv(self.hueU, 1, 1))
 
         for i in range(1, len(verts)):

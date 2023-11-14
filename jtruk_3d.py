@@ -42,7 +42,7 @@ class jtruk3DModel:
     # trans: None or {x,y,z}
     # rot: None or {x,y,z}
     # We can return stuff from the _draw function if we need transitions
-    def draw(self, gfx, display, rotL, trans, rotW, T, extra=None):
+    def draw(self, gfx, display, rotL, trans, rotW, extra=None):
         verts = []
         for v in self.verts:
             x, y, z = v[0], v[1], v[2]
@@ -86,9 +86,9 @@ class jtruk3DModel:
                 ]
             })
 
-        return self._draw(gfx, verts, T, extra)
+        return self._draw(gfx, verts, extra)
 
-    def _draw(self, gfx, verts, T, extra):
+    def _draw(self, gfx, verts, extra):
         raise Exception("There must be a _draw function for this class")
 
 
@@ -103,7 +103,7 @@ class jtruk3DModelBoxLines(jtruk3DModel):
             [2,3], [3,7], [4,5], [4,6], [5,7], [6,7]
         ]
 
-    def _draw(self, gfx, verts, T, extra):
+    def _draw(self, gfx, verts, extra):
         WHITE=gfx.create_pen(255, 255, 255)
         gfx.set_pen(WHITE)
         for l in self.lines:
@@ -145,7 +145,7 @@ class jtruk3DModelIcosahedron(jtruk3DModel):
         ]
         """
         
-    def _draw(self, gfx, verts, T, extra):
+    def _draw(self, gfx, verts, extra):
         lightVector=[0, 0.77, -0.77]
         drawTris=[]
         totTris = len(self.triangles)

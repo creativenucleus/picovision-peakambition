@@ -32,22 +32,27 @@ class jtruk3DModelPicovision(jtruk3DModel):
     def getLetterVertexSpan(self, i):
         return self.iLetterDef[i]['vs']
 
-    def _draw(self, gfx, verts, T, extra):
+    def _draw(self, gfx, verts, extra):
+        # Global line thickness (as approximation)
+        v = verts[self.iLetterDef[0]['vs'][0]]
+        thickness = int(sqrt(clamp(v['pp'][2]*4,4,16)))
+
         allLines=[]
         for iLetter, vertDef in enumerate(self.iLetterDef):
+
             # Collect the lines for one letter
             letterLines=[]
             vLast = None
             for iV in range(vertDef['vs'][0],vertDef['vs'][1]):
                 v = verts[iV]
                 if vLast != None:
-                    hue=iV*0.002+T*0.015
+                    hue=iV*0.002+extra['t']*0.015
                     line={
                         'h': hue,
                         'i': 1 if (extra['focusLetter']==iLetter) else extra['otherIntensity'],
                         'x0': v['pp'][0], 'y0': v['pp'][1],
                         'x1': vLast['pp'][0], 'y1': vLast['pp'][1],
-                        't': int(sqrt(clamp(v['pp'][2]*4,4,16)))
+                        't': thickness
                     }
                     letterLines.append(line)
                 vLast=v
