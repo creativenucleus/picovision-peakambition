@@ -25,7 +25,7 @@ shared_vars.GFX = gfx
 
 #gfx=PicoGraphics(pen_type=PEN_RGB555, width=640, height=480)
 WIDTH,HEIGHT=gfx.get_bounds()
-DISPLAY={'w': WIDTH, 'h': HEIGHT, 'xmid': int(WIDTH/2), 'ymid': int(HEIGHT/2), 'scale': 100}
+DISPLAY={'w': WIDTH, 'h': HEIGHT, 'xmid': int(WIDTH/2), 'ymid': int(HEIGHT/2)-1, 'scale': 100}
 tau=pi*2
 WHALF=int(WIDTH/2)
 HHALF=int(HEIGHT/2)
@@ -66,7 +66,7 @@ SCRIPT_POS=-1
 SCRIPT_ACTION_CAP=10
 SCRIPT_ACTION_T=SCRIPT_ACTION_CAP
 SCRIPT_ITEM=None
-CAM={'p': makeV(0,0,0), 'rz': 0}
+CAM={'p': makeV(0,0, shared_vars.DISTANCE_START), 'rz': 0}
 CAM_TWEEN0={'p': makeV(0,0,0), 'rz': 0}
 CAM_TWEEN1={'p': makeV(0,0,0), 'rz': 0}
 EFFECT=None
@@ -82,12 +82,12 @@ def doScript(lerpPos, tweenPos):
         if SCRIPT_ACTION_T==0:
             CAM_TWEEN0=CAM
             letter=PICOVISION.getLetterPos(SCRIPT_ITEM['letter'])
-            CAM_TWEEN1={'p': makeV(letter[0], letter[1], -9.25), 'rz': SCRIPT_ITEM['rz']}
+            CAM_TWEEN1={'p': makeV(letter[0], letter[1], shared_vars.DISTANCE_CLOSE), 'rz': SCRIPT_ITEM['rz']}
         CAM={
             'p': makeV(
                 lerp(tweenPos, CAM_TWEEN0['p'][0], CAM_TWEEN1['p'][0]),
                 lerp(tweenPos, CAM_TWEEN0['p'][1], CAM_TWEEN1['p'][1]),
-                lerp(tweenPos, CAM_TWEEN0['p'][2], CAM_TWEEN1['p'][2]) + sin(tweenPos*pi)*10
+                lerp(tweenPos, CAM_TWEEN0['p'][2], CAM_TWEEN1['p'][2]) + sin(tweenPos*pi) * shared_vars.DISTANCE_FAR
             ),
             'rz': lerp(tweenPos, CAM_TWEEN0['rz'], CAM_TWEEN1['rz'])
         }
@@ -96,17 +96,19 @@ def doScript(lerpPos, tweenPos):
             EFFECT=SCRIPT_ITEM['ceffect'](ILOOP)
 
         EFFECT.draw(gfx, DISPLAY, lerpPos, tweenPos)
-        legend = EFFECT.legend()
-        detail = EFFECT.detail()
-        x,y=WHALF-len(legend)*7,10
-        xl,yl=20,HEIGHT-20
-        gfx.set_pen(RED)
-        gfx.text(legend, x+1,y+1)
-        gfx.set_pen(BLACK)
-        gfx.text(detail, xl+1,yl+1, scale=1)
-        gfx.set_pen(WHITE)
-        gfx.text(legend, x,y)
-        gfx.text(detail, xl,yl, scale=1)
+        
+        if ILOOP == 1:
+            legend = EFFECT.legend()
+            detail = EFFECT.detail()
+            x,y=WHALF-len(legend)*7,10
+            xl,yl=20,HEIGHT-20
+            gfx.set_pen(RED)
+            gfx.text(legend, x+1,y+1)
+            gfx.set_pen(BLACK)
+            gfx.text(detail, xl+1,yl+1, scale=1)
+            gfx.set_pen(WHITE)
+            gfx.text(legend, x,y)
+            gfx.text(detail, xl,yl, scale=1)
     return lerpPos, tweenPos
 
 def debugPrintScript():
@@ -136,7 +138,7 @@ def preflightSetup():
 
 def mainDemo():
     global T, SCRIPT, SCRIPT_ACTION_T, SCRIPT_ACTION_CAP, SCRIPT_ITEM, SCRIPT_POS, ILOOP
-    global EFFECT
+    global EFFECT, CAM
     TIMER_SAMPLES=10
     TIMER_N=0
     TIMER_COUNT=0
@@ -160,6 +162,7 @@ def mainDemo():
             SCRIPT_POS += 1
             if SCRIPT_POS >= len(SCRIPT):
                 SCRIPT_POS=0
+                CAM={'p': makeV(0,0, shared_vars.DISTANCE_START), 'rz': 0}
                 ILOOP += 1
 
             SCRIPT_ITEM=SCRIPT[SCRIPT_POS]

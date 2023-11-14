@@ -39,8 +39,9 @@ class jtruk3DModel:
         self.verts.extend(verts)
     
     # display: {w}
-    # trans: None or {x,y,z}
-    # rot: None or {x,y,z}
+    # rotL: None or [x,y,z]
+    # trans: None or [x,y,z]
+    # rotW: None or [x,y,z]
     # We can return stuff from the _draw function if we need transitions
     def draw(self, gfx, display, rotL, trans, rotW, extra=None):
         verts = []
@@ -76,7 +77,7 @@ class jtruk3DModel:
                     sina,cosa=sin(rotW[2]), cos(rotW[2]),
                     x, y = x*cosa-y*sina, x*sina+y*cosa
                                 
-            zF=7-z/1.5
+            zF=(.001 if z==0 else z)/1.5
             verts.append({
                 'p': [x, y, z],
                 'pp': [
@@ -146,7 +147,7 @@ class jtruk3DModelIcosahedron(jtruk3DModel):
         """
         
     def _draw(self, gfx, verts, extra):
-        lightVector=[0, 0.77, -0.77]
+        lightVector=[0, 0.77, 0.77]
         drawTris=[]
         totTris = len(self.triangles)
         for nTri,tri in enumerate(self.triangles):

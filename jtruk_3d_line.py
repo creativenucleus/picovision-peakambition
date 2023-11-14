@@ -2,13 +2,13 @@ from jtruk_3d import jtruk3DModel, makeV
 from random import random
 
 class jtruk3DModelLine(jtruk3DModel):
-    def __init__(self, nPoints, hueU, z):
+    def __init__(self, nPoints, hueU, ySpan, z):
         super().__init__()
         
         self.hueU = hueU
         for i in range(nPoints):
             x = (i/(nPoints - 1))*2 - 1 # -1 to 1
-            y = random()*2 - 1	# -1 to 1
+            y = random()*ySpan - ySpan/2	# ySpan = 2 -> -1 to 1
             self.appendVerts([makeV(x,y,z)])
         
     def _draw(self, gfx, verts, extra):

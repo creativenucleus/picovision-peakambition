@@ -1,30 +1,33 @@
 from jtruk_3d import jtruk3DModel, makeV, clamp
 from math import sin, cos, pi, sqrt
 
+LETTERS = [
+    {'l': 'P', 't': [0,0,0], 'o': [0,-.5,0]},
+    {'l': 'I', 't': [1.5,0,0], 'o': [0,0,0]},
+    {'l': 'C', 't': [3,0,0], 'o': [0,0,0]},
+    {'l': 'O', 't': [5,0,0], 'o': [0,0,0]},
+    {'l': 'V', 't': [7,0,0], 'o': [0,0,0]},
+    {'l': 'I', 't': [8.5,0,0], 'o': [0,0,0]},
+    {'l': 'S', 't': [10,0,0], 'o': [0,0,0]},
+    {'l': 'I', 't': [11.5,0,0], 'o': [0,0,0]},
+    {'l': 'O', 't': [13,0,0], 'o': [0,0,0]},
+    {'l': 'N', 't': [15.5,0,0], 'o': [.5,-.5,0]},
+]
+
+for letter in LETTERS:
+    letter['t'] = [letter['t'][0] - 7.78, letter['t'][1], letter['t'][2]]
+
 class jtruk3DModelPicovision(jtruk3DModel):
     def __init__(self):
         super().__init__()
-        
-        self.letters=[
-            {'vs': transVs(makeLetter('P'), 0, 0, 0), 'o': makeV(0,-.5,0)},
-            {'vs': transVs(makeLetter('I'), 1.5, 0, 0), 'o': makeV(0,0,0)},
-            {'vs': transVs(makeLetter('C'), 3, 0, 0), 'o': makeV(0,0,0)},
-            {'vs': transVs(makeLetter('O'), 5, 0, 0), 'o': makeV(0,0,0)},
-            {'vs': transVs(makeLetter('V'), 7, 0, 0), 'o': makeV(0,0,0)},
-            {'vs': transVs(makeLetter('I'), 8.5, 0, 0), 'o': makeV(0,0,0)},
-            {'vs': transVs(makeLetter('S'), 10, 0, 0), 'o': makeV(0,0,0)},
-            {'vs': transVs(makeLetter('I'), 11.5, 0, 0), 'o': makeV(0,0,0)},
-            {'vs': transVs(makeLetter('O'), 13, 0, 0), 'o': makeV(0,0,0)},
-            {'vs': transVs(makeLetter('N'), 15.5, 0, 0), 'o': makeV(.5,-.5,0)}
-        ]
 
         self.iLetterDef=[]
-        for l in self.letters:
+        for _, l in enumerate(LETTERS):
             startVert=len(self.verts)
-            transL=transVs(l['vs'], -7.78, 0, 0)
-            self.appendVerts(transL)
+            vs = transVs(makeLetter(l['l']), l['t'][0], l['t'][1], l['t'][2])
+            self.appendVerts(vs)
             endVert=len(self.verts)
-            self.iLetterDef.append({'vs': [startVert, endVert], 'mid': addV3(getMidV(transL), l['o'])})
+            self.iLetterDef.append({'vs': [startVert, endVert], 'mid': addV3(getMidV(vs), l['o'])})
 
     def getLetterPos(self, i):
         return self.iLetterDef[i]['mid']
@@ -35,11 +38,10 @@ class jtruk3DModelPicovision(jtruk3DModel):
     def _draw(self, gfx, verts, extra):
         # Global line thickness (as approximation)
         v = verts[self.iLetterDef[0]['vs'][0]]
-        thickness = int(sqrt(clamp(v['pp'][2]*4,4,16)))
+        thickness = int(sqrt(clamp(-v['pp'][2]*4,4,16)))
 
         allLines=[]
         for iLetter, vertDef in enumerate(self.iLetterDef):
-
             # Collect the lines for one letter
             letterLines=[]
             vLast = None
@@ -66,7 +68,25 @@ class jtruk3DModelPicovision(jtruk3DModel):
             for l in allLines[iLetter]:
                 gfx.set_pen(gfx.create_pen_hsv(l['h'],1,l['i']))
                 gfx.line(l['x0'],l['y0'],l['x1'],l['y1'],l['t'])
-        
+
+class jtruk3DModelLetter(jtruk3DModel):
+    def __init__(self, iLetter):
+        super().__init__()
+        self.iLetter = iLetter
+        letter = LETTERS[iLetter]
+        vs = makeLetter(letter['l'])
+        self.appendVerts(vs)
+
+    def getFinalPos(self):
+        return LETTERS[self.iLetter]['t']
+
+    def _draw(self, gfx, verts, extra):
+        gfx.set_pen(gfx.create_pen_hsv(0,1,1))
+        vLast = None
+        for v in verts:
+            if vLast != None:
+                gfx.line(v['pp'][0],v['pp'][1], vLast['pp'][0],vLast['pp'][1], 2)
+            vLast = v
 
 def makeLetter(letter):
     if letter=='P':
