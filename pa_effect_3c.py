@@ -1,14 +1,15 @@
 from math import sin, cos
 from pa_effect import paCEffect
-from jtruk_3d import jtruk3DSetGfx, makeV, jtruk3DModelBoxLines, jtruk3DModelIcosahedron
-
-# box=jtruk3DModelBoxLines()
+from jtruk_3d import jtruk3DModelFilled
 
 class paCEffect3C(paCEffect):
     def __init__(self, iVersion):
         super().__init__()
 
-        self.icosahedron=jtruk3DModelIcosahedron()
+        if iVersion == 0:
+            self.icosahedron=jtruk3DModelFilled(0)
+        else:
+            self.icosahedron=jtruk3DModelFilled(1)
 
         self.x, self.y, self.z = 0, -1, 0
         self.dx, self.dy, self.dz = .07, .01, .12
@@ -35,7 +36,7 @@ class paCEffect3C(paCEffect):
         self.dy += .02
         self.rx += self.drx
         self.rz += self.drz
-        self.icosahedron.draw(gfx, display, [rX, rY, rZ], [self.x, self.y, 5+self.z], None, lerpPos)
+        self.icosahedron.draw(gfx, display, [rX, rY, rZ], [self.x, self.y, self.z + 5], None, lerpPos)
 
     def legend(self):
         return "Icosahedron"

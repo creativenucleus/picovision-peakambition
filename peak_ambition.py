@@ -41,61 +41,59 @@ SPR_PIRATE_MODEL_ID = 0
 
 SCRIPT=[
     {'action':"move", 'letter':0, 'rz': -pi*.5},
-    {'action':"effect", 'ceffect':paCEffect1P, 'duration': 300},
+    {'action':"effect", 'ceffect':paCEffect1P, 'duration': 2},
     {'action':"move", 'letter':1, 'rz': pi},
-    {'action':"effect", 'ceffect':paCEffect2I, 'duration': 100},
+    {'action':"effect", 'ceffect':paCEffect2I, 'duration': 2},
     {'action':"move", 'letter':2, 'rz': -pi*.5},
-    {'action':"effect", 'ceffect':paCEffect3C, 'duration': 100},
+    {'action':"effect", 'ceffect':paCEffect3C, 'duration': 2},
     {'action':"move", 'letter':3, 'rz': -pi*1.25},
-    {'action':"effect", 'ceffect':paCEffect4O, 'duration': 100},
+    {'action':"effect", 'ceffect':paCEffect4O, 'duration': 2},
     {'action':"move", 'letter':4, 'rz': 0},
-    {'action':"effect", 'ceffect':paCEffect5V, 'duration': 100},
+    {'action':"effect", 'ceffect':paCEffect5V, 'duration': 2},
     {'action':"move", 'letter':5, 'rz': pi},
-    {'action':"effect", 'ceffect':paCEffect6I, 'duration': 100},
+    {'action':"effect", 'ceffect':paCEffect6I, 'duration': 2},
     {'action':"move", 'letter':6, 'rz': -pi*.5},
-    {'action':"effect", 'ceffect':paCEffect7S, 'duration': 100},
+    {'action':"effect", 'ceffect':paCEffect7S, 'duration': 2},
     {'action':"move", 'letter':7, 'rz': -pi*1.5},
-    {'action':"effect", 'ceffect':paCEffect8I, 'duration': 100},
+    {'action':"effect", 'ceffect':paCEffect8I, 'duration': 2},
     {'action':"move", 'letter':8, 'rz': -pi*1.75},
-    {'action':"effect", 'ceffect':paCEffect9O, 'duration': 100},
+    {'action':"effect", 'ceffect':paCEffect9O, 'duration': 2},
     {'action':"move", 'letter':9, 'rz': -pi*.25},
-    {'action':"effect", 'ceffect':paCEffect10N, 'duration': 100},
+    {'action':"effect", 'ceffect':paCEffect10N, 'duration': 4},
 ]
 
-SCRIPT_POS=-1
-SCRIPT_ACTION_CAP=10
-SCRIPT_ACTION_T=SCRIPT_ACTION_CAP
-SCRIPT_ITEM=None
+def getPatternDuration(iScriptItem):
+    return (SCRIPT[iScriptItem]['duration']) if ('duration' in SCRIPT[iScriptItem]) else 1
+
+ILOOP=0
+SCRIPT_POS=0
 CAM={'p': makeV(0,0, shared_vars.DISTANCE_START), 'rz': 0}
 CAM_TWEEN0={'p': makeV(0,0,0), 'rz': 0}
 CAM_TWEEN1={'p': makeV(0,0,0), 'rz': 0}
 EFFECT=None
-ILOOP=0
 PICOVISION=jtruk3DModelPicovision()
 
-
-def doScript(lerpPos, tweenPos):
-    global SCRIPT_ITEM, SCRIPT_ACTION_T
+def doScript(scriptItem, isInit, lerpPos, sweepPos):
     global CAM, CAM_TWEEN0, CAM_TWEEN1
     global EFFECT
-    if SCRIPT_ITEM['action'] == "move":
-        if SCRIPT_ACTION_T==0:
+    if scriptItem['action'] == "move":
+        if isInit:
             CAM_TWEEN0=CAM
-            letter=PICOVISION.getLetterPos(SCRIPT_ITEM['letter'])
-            CAM_TWEEN1={'p': makeV(letter[0], letter[1], shared_vars.DISTANCE_CLOSE), 'rz': SCRIPT_ITEM['rz']}
+            letter=PICOVISION.getLetterPos(scriptItem['letter'])
+            CAM_TWEEN1={'p': makeV(letter[0], letter[1], letter[2] + shared_vars.DISTANCE_CLOSE), 'rz': scriptItem['rz']}
         CAM={
             'p': makeV(
-                lerp(tweenPos, CAM_TWEEN0['p'][0], CAM_TWEEN1['p'][0]),
-                lerp(tweenPos, CAM_TWEEN0['p'][1], CAM_TWEEN1['p'][1]),
-                lerp(tweenPos, CAM_TWEEN0['p'][2], CAM_TWEEN1['p'][2]) + sin(tweenPos*pi) * shared_vars.DISTANCE_FAR
+                lerp(sweepPos, CAM_TWEEN0['p'][0], CAM_TWEEN1['p'][0]),
+                lerp(sweepPos, CAM_TWEEN0['p'][1], CAM_TWEEN1['p'][1]),
+                lerp(sweepPos, CAM_TWEEN0['p'][2], CAM_TWEEN1['p'][2]) + sin(sweepPos*pi) * shared_vars.DISTANCE_FAR
             ),
-            'rz': lerp(tweenPos, CAM_TWEEN0['rz'], CAM_TWEEN1['rz'])
+            'rz': lerp(sweepPos, CAM_TWEEN0['rz'], CAM_TWEEN1['rz'])
         }
-    elif SCRIPT_ITEM['action'] == "effect":
-        if SCRIPT_ACTION_T == 0:
-            EFFECT=SCRIPT_ITEM['ceffect'](ILOOP)
+    elif scriptItem['action'] == "effect":
+        if isInit:
+            EFFECT=scriptItem['ceffect'](ILOOP)
 
-        EFFECT.draw(gfx, DISPLAY, lerpPos, tweenPos)
+        EFFECT.draw(gfx, DISPLAY, lerpPos, sweepPos)
         
         if ILOOP == 1:
             legend = EFFECT.legend()
@@ -109,11 +107,6 @@ def doScript(lerpPos, tweenPos):
             gfx.set_pen(WHITE)
             gfx.text(legend, x,y)
             gfx.text(detail, xl,yl, scale=1)
-    return lerpPos, tweenPos
-
-def debugPrintScript():
-    global SCRIPT_POS, SCRIPT_ACTION_T
-    gfx.text("POS {} T {}".format(SCRIPT_POS, SCRIPT_ACTION_T), 0,10, fixed_width=1,scale=1)
     
 def lerp(t,v1,v2):
     return (1-t)*v1+t*v2
@@ -137,7 +130,7 @@ def preflightSetup():
     return None
 
 def mainDemo():
-    global T, SCRIPT, SCRIPT_ACTION_T, SCRIPT_ACTION_CAP, SCRIPT_ITEM, SCRIPT_POS, ILOOP
+    global T, SCRIPT, SCRIPT_POS, ILOOP
     global EFFECT, CAM
     TIMER_SAMPLES=10
     TIMER_N=0
@@ -145,6 +138,11 @@ def mainDemo():
     DURATION=""
     LAST_PICOVISION_LINES=[]
     LAST_PICOVSION_LETTER=0
+    scriptItem = SCRIPT[SCRIPT_POS]
+    startPattern = 0
+    patternDuration = getPatternDuration(0)
+    nextMusicPatternTrigger = patternDuration
+    isEffectInit = True
     shared_vars.MUSIC_IN_ACTION = "play"
 
     while True:
@@ -153,33 +151,39 @@ def mainDemo():
         gfx.set_pen(BLACK)
         gfx.clear()
 
-        SCRIPT_ACTION_T += 1
-        if SCRIPT_ACTION_T>=SCRIPT_ACTION_CAP:
+        musicAccPattern = shared_vars.MUSIC_OUT_ACCPATTERN 
+        musicRow = shared_vars.MUSIC_OUT_ROW
+
+        # Check if our music pattern has changed
+        if musicAccPattern >= nextMusicPatternTrigger:
+            isEffectInit = True
             if EFFECT != None:
                 EFFECT.cleanup()
 
-            SCRIPT_ACTION_T=0
             SCRIPT_POS += 1
             if SCRIPT_POS >= len(SCRIPT):
                 SCRIPT_POS=0
                 CAM={'p': makeV(0,0, shared_vars.DISTANCE_START), 'rz': 0}
                 ILOOP += 1
-
-            SCRIPT_ITEM=SCRIPT[SCRIPT_POS]
-            SCRIPT_ACTION_CAP=('duration' in SCRIPT_ITEM) and SCRIPT_ITEM['duration'] or 50
+            
+            startPattern = musicAccPattern
+            patternDuration = getPatternDuration(SCRIPT_POS)
+            nextMusicPatternTrigger += patternDuration
+            
+            scriptItem = SCRIPT[SCRIPT_POS]
         
-        # End after two loops
-        if ILOOP > 2:
-            return
+            # End after two loops
+            if ILOOP > 2:
+                return
 
-        lerpPos=SCRIPT_ACTION_T/SCRIPT_ACTION_CAP
-        tweenPos=smoothStep(lerpPos)
+        lerpPos = ((musicAccPattern - startPattern) * 64 + musicRow) / (patternDuration * 64)
+        sweepPos = smoothStep(lerpPos)
 
-        doScript(lerpPos, tweenPos)
+        doScript(scriptItem, isEffectInit, lerpPos, sweepPos)
 
         otherIntensity = rampUpThenDown(lerpPos)
-        if SCRIPT_ITEM['action'] == "move":
-            focusLetter = SCRIPT_ITEM['letter'] if lerpPos > .5 else (SCRIPT_ITEM['letter']-1)%len(PICOVISION.iLetterDef)
+        if scriptItem['action'] == "move":
+            focusLetter = scriptItem['letter'] if lerpPos > .5 else (scriptItem['letter']-1)%len(PICOVISION.iLetterDef)
             LAST_PICOVISION_LINES = PICOVISION.draw(
                 gfx, DISPLAY,
                 None,
@@ -190,14 +194,13 @@ def mainDemo():
                     'otherIntensity': otherIntensity
                 }
             )
-            LAST_PICOVSION_LETTER = SCRIPT_ITEM['letter']
+            LAST_PICOVSION_LETTER = scriptItem['letter']
         else:
             PICOVISION.drawLines(LAST_PICOVISION_LINES, gfx, LAST_PICOVSION_LETTER, LAST_PICOVSION_LETTER+1)
 
         gfx.set_pen(WHITE)
-        gfx.text(DURATION, 0,0, fixed_width=1,scale=1)
-        gfx.text(str(shared_vars.MUSIC_OUT_ROW), 30,100, fixed_width=1,scale=1)
-        debugPrintScript()
+        gfx.text(DURATION, 0,10, fixed_width=1,scale=1)
+        gfx.text("{}".format(lerpPos), 0, 20, fixed_width=1,scale=1)
 
         gfx.update()
         T=T+1
@@ -208,6 +211,8 @@ def mainDemo():
             DURATION=str(TIMER_COUNT/TIMER_SAMPLES)
             TIMER_N=0
             TIMER_COUNT=0
+
+        isEffectInit = False
 
 def textScreen(textLines, duration):
     t = 0
@@ -265,6 +270,7 @@ def demo_thread():
 
     mainDemo()
 
+    shared_vars.MUSIC_IN_ACTION = "stop"
     textScreen([
         "End!",
     ], 200)

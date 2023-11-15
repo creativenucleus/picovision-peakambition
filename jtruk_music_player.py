@@ -153,6 +153,7 @@ class MusicPlayer:
         nChannels = len(self.patterns[0])
         synth.play()
 
+        shared_vars.MUSIC_OUT_ACCPATTERN = 0
         while True:
             for iCh in range(nChannels):
                 cellRaw = self.patterns[self.iPattern][iCh][self.iRow]
@@ -168,3 +169,4 @@ class MusicPlayer:
             if self.iRow>=len(self.patterns[self.iPattern][0]):
                 self.iRow=0
                 self.iPattern=(self.iPattern+1)%len(self.patterns)
+                shared_vars.MUSIC_OUT_ACCPATTERN += 1

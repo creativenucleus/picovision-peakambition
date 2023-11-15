@@ -27,8 +27,8 @@ def getDotProduct(v1, v2):
     return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]
 
 # Shorthand - add the three z points
-def triZSort(tri):
-    return tri['points'][0][2]+tri['points'][1][2]+tri['points'][2][2]
+def triSortZ(tri):
+    return tri['z']
 
 class jtruk3DModel:
     def __init__(self):
@@ -111,43 +111,45 @@ class jtruk3DModelBoxLines(jtruk3DModel):
             gfx.line(verts[l[0]][0],verts[l[0]][1], verts[l[1]][0],verts[l[1]][1])
         
 
-class jtruk3DModelIcosahedron(jtruk3DModel):
-    def __init__(self):
+class jtruk3DModelFilled(jtruk3DModel):
+    def __init__(self, iModel):
         super().__init__() 
 
         xp=.52573
         zp=.85065
         np=0
         
-        self.appendVerts([
-            makeV(-xp,np,zp), makeV(xp,np,zp), makeV(-xp,np,-zp), makeV(xp,np,-zp),
-            makeV(np,zp,xp), makeV(np,zp,-xp), makeV(np,-zp,xp), makeV(np,-zp,-xp),
-            makeV(zp,xp,np), makeV(-zp,xp,np), makeV(zp,-xp,np), makeV(-zp,-xp,np)
-        ])
+        if iModel == 0:
+            # Tetrahedron
+            self.appendVerts([
+                makeV(0,0,1),
+                makeV(sqrt(8/9),0,-1/3),
+                makeV(-sqrt(2/9),sqrt(2/3),-1/3),
+                makeV(-sqrt(2/9),-sqrt(2/3),-1/3)
+            ])
+            self.triangles = [
+                [0, 1, 2],
+                [0, 2, 3],
+                [0, 3, 1],
+                [1, 2, 3]
+            ]
+        else:
+            # Icosahedron
+            self.appendVerts([
+                makeV(-xp,np,zp), makeV(xp,np,zp), makeV(-xp,np,-zp), makeV(xp,np,-zp),
+                makeV(np,zp,xp), makeV(np,zp,-xp), makeV(np,-zp,xp), makeV(np,-zp,-xp),
+                makeV(zp,xp,np), makeV(-zp,xp,np), makeV(zp,-xp,np), makeV(-zp,-xp,np)
+            ])
 
-        self.triangles = [
-            [0,4,1], [0,9,4], [9,5,4], [4,5,8], [4,8,1],
-            [8,10,1], [8,3,10], [5,3,8], [5,2,3], [2,7,3],
-            [7,10,3], [7,6,10], [7,11,6], [11,0,6], [0,1,6],
-            [6,1,10], [9,0,11], [9,11,2], [9,2,5], [7,2,11]
-        ]
-        """
-        self.appendVerts([
-            makeV(0,0,1),
-            makeV(sqrt(8/9),0,-1/3),
-            makeV(-sqrt(2/9),sqrt(2/3),-1/3),
-            makeV(-sqrt(2/9),-sqrt(2/3),-1/3)
-        ])
-        self.triangles = [
-            [0, 1, 2],
-            [0, 2, 3],
-            [0, 3, 1],
-            [1, 2, 3]
-        ]
-        """
-        
+            self.triangles = [
+                [0,4,1], [0,9,4], [9,5,4], [4,5,8], [4,8,1],
+                [8,10,1], [8,3,10], [5,3,8], [5,2,3], [2,7,3],
+                [7,10,3], [7,6,10], [7,11,6], [11,0,6], [0,1,6],
+                [6,1,10], [9,0,11], [9,11,2], [9,2,5], [7,2,11]
+            ]
+
     def _draw(self, gfx, verts, extra):
-        lightVector=[0, 0.77, 0.77]
+        lightVector=[0, 0.77, -0.77]
         drawTris=[]
         totTris = len(self.triangles)
         for nTri,tri in enumerate(self.triangles):
@@ -157,10 +159,11 @@ class jtruk3DModelIcosahedron(jtruk3DModel):
             lightStrength=clamp(getDotProduct(normal,lightVector),0,1)
             drawTris.append({
                 'points': [triV1['pp'], triV2['pp'], triV3['pp']],
-                'pen': gfx.create_pen_hsv(nTri/totTris, 1, clamp(lightStrength*triV1['pp'][2]/2,0.3,1)),
+                'z': triV1['p'][2] + triV2['p'][2] + triV3['p'][2],
+                'pen': gfx.create_pen_hsv(nTri/totTris, 1, clamp(lightStrength*triV1['pp'][2]/2,0.1,1)),
             })
   
-        drawTris.sort(key=triZSort)
+        drawTris.sort(key=triSortZ)
         for tri in drawTris:
             gfx.set_pen(tri['pen'])
             gfx.triangle(
