@@ -245,7 +245,6 @@ def demo_thread():
     if errors != None:
         raiseError(errors)
 
-    """
     textScreen([
         "Welcome here",
         "This is my demo",
@@ -266,7 +265,6 @@ def demo_thread():
         "I hope you like it",
         "I hope you like it",
     ], 200)
-    """
 
     mainDemo()
 

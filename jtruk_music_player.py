@@ -169,4 +169,5 @@ class MusicPlayer:
             if self.iRow>=len(self.patterns[self.iPattern][0]):
                 self.iRow=0
                 self.iPattern=(self.iPattern+1)%len(self.patterns)
+                shared_vars.MUSIC_OUT_ROW = 0
                 shared_vars.MUSIC_OUT_ACCPATTERN += 1
