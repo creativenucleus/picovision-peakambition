@@ -5,7 +5,7 @@ import _thread
 from jtruk_sprite import jtrukSpriteModel, jtrukSprites
 from jtruk_music_player import MusicPlayer
 from jtruk_3d_picovision import jtruk3DModelPicovision
-from jtruk_tune_main import tune as main_tune
+from jtruk_tune_main import getTune
 import pa_shared_vars as shared_vars
 from pa_effect_1p import paCEffect1P
 from pa_effect_2i import paCEffect2I
@@ -63,7 +63,7 @@ SCRIPT=[
 ]
 
 def getPatternDuration(iScriptItem):
-    return (SCRIPT[iScriptItem]['duration']) if ('duration' in SCRIPT[iScriptItem]) else 1
+    return (SCRIPT[iScriptItem]['duration']) if ('duration' in SCRIPT[iScriptItem]) else 2
 
 ILOOP=0
 SCRIPT_POS=0
@@ -83,8 +83,8 @@ def doScript(scriptItem, isInit, lerpPos, sweepPos):
             CAM_TWEEN1={'p': makeV(letter[0], letter[1], letter[2] + shared_vars.DISTANCE_CLOSE), 'rz': scriptItem['rz']}
         CAM={
             'p': makeV(
-                lerp(sweepPos, CAM_TWEEN0['p'][0], CAM_TWEEN1['p'][0]),
-                lerp(sweepPos, CAM_TWEEN0['p'][1], CAM_TWEEN1['p'][1]),
+                lerp(sweepPos, CAM_TWEEN0['p'][0], CAM_TWEEN1['p'][0]) + sin(sweepPos*pi*2) * 4,
+                lerp(sweepPos, CAM_TWEEN0['p'][1], CAM_TWEEN1['p'][1]) + sin(sweepPos*pi*4) * 2,
                 lerp(sweepPos, CAM_TWEEN0['p'][2], CAM_TWEEN1['p'][2]) + sin(sweepPos*pi) * shared_vars.DISTANCE_FAR
             ),
             'rz': lerp(sweepPos, CAM_TWEEN0['rz'], CAM_TWEEN1['rz'])
@@ -123,9 +123,9 @@ def rampUpThenDown(t):
         return 1
 
 def preflightSetup():
-    shared_vars.SPR_PIRATE = jtrukSpriteModel(SPR_PIRATE_MODEL_ID, "./ninja.png")  # ./goal.png "/pim-logo.png"
-    if not shared_vars.SPR_PIRATE.load(gfx):
-        return ["Pirate sprite not loaded - check the file is on the Picovision"]
+    #shared_vars.SPR_PIRATE = jtrukSpriteModel(SPR_PIRATE_MODEL_ID, "./ninja.png")  # ./goal.png "/pim-logo.png"
+    #if not shared_vars.SPR_PIRATE.load(gfx):
+    #    return ["Pirate sprite not loaded - check the file is on the Picovision"]
     
     return None
 
@@ -186,9 +186,10 @@ def mainDemo():
             focusLetter = scriptItem['letter'] if lerpPos > .5 else (scriptItem['letter']-1)%len(PICOVISION.iLetterDef)
             LAST_PICOVISION_LINES = PICOVISION.draw(
                 gfx, DISPLAY,
-                None,
-                [-CAM['p'][0],-CAM['p'][1],-CAM['p'][2]], [0,0,CAM['rz']],
-                {
+                [sin(sweepPos*pi*2)*3+sin(lerpPos*pi*4),0,0],
+                [-CAM['p'][0],-CAM['p'][1],-CAM['p'][2]],
+                [0,0,CAM['rz']],
+                extra={
                     't': T,
                     'focusLetter': focusLetter,
                     'otherIntensity': otherIntensity
@@ -245,6 +246,7 @@ def demo_thread():
     if errors != None:
         raiseError(errors)
 
+    """
     textScreen([
         "Welcome here",
         "This is my demo",
@@ -265,7 +267,8 @@ def demo_thread():
         "I hope you like it",
         "I hope you like it",
     ], 200)
-
+    """
+    
     mainDemo()
 
     shared_vars.MUSIC_IN_ACTION = "stop"
@@ -274,7 +277,7 @@ def demo_thread():
     ], 200)
 
 def sfx_thread():
-    musicPlayer = MusicPlayer(main_tune)
+    musicPlayer = MusicPlayer(getTune())
     musicPlayer.play()
 
 def peakAmbition():

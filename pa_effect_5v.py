@@ -13,7 +13,7 @@ class paCEffect5V(paCEffect):
             self.dots.append({'x': uniform(-1, 1), 'y': -1, 'dx': uniform(-.001,.001), 'dy': 0})
         gfx.set_pen(pen_white)
         for d in self.dots:
-            d['dy'] += .0001
+            d['dy'] += .0002
             d['x'] += d['dx']
             d['y'] += d['dy']
             if d['y']>=1:

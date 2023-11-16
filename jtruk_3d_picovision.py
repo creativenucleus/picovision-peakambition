@@ -6,7 +6,7 @@ LETTERS = [
     {'l': 'I', 't': [1.5,0,0], 'o': [0,0,0.02]},
     {'l': 'C', 't': [3,0,0], 'o': [0,0,0]},
     {'l': 'O', 't': [5,0,0], 'o': [0,0,0]},
-    {'l': 'V', 't': [7,0,0], 'o': [0,0,0]},
+    {'l': 'V', 't': [7,0,0], 'o': [0,0,-.5]},
     {'l': 'I', 't': [8.5,0,0], 'o': [0,0,0.02]},
     {'l': 'S', 't': [10,0,0], 'o': [0,0,0]},
     {'l': 'I', 't': [11.5,0,0], 'o': [0,0,0.35]},
@@ -36,17 +36,17 @@ class jtruk3DModelPicovision(jtruk3DModel):
         return self.iLetterDef[i]['vs']
 
     def _draw(self, gfx, verts, extra):
-        # Global line thickness (as approximation)
-        v = verts[self.iLetterDef[0]['vs'][0]]
-        thickness = int(sqrt(clamp(-v['pp'][2]*4,4,16)))
-
         allLines=[]
+        thickness = None
         for iLetter, vertDef in enumerate(self.iLetterDef):
             # Collect the lines for one letter
             letterLines=[]
             vLast = None
-            for iV in range(vertDef['vs'][0],vertDef['vs'][1]):
+            for iV in range(vertDef['vs'][0], vertDef['vs'][1]):
                 v = verts[iV]
+                if thickness == None:
+                    thickness = clamp(int(sqrt(25/(v['p'][2]))), 2, 5)
+
                 if vLast != None:
                     hue=iV*0.002+extra['t']*0.015
                     line={
@@ -92,7 +92,7 @@ def makeLetter(letter):
     if letter=='P':
         return (
             [makeV(-1,1,0), makeV(-1,-1,0), makeV(0,-1,0)] +
-            transVs(scaleV(getPointsArc(8,pi*2.5,pi*1.5),1,.5,1),0,-.5,0) +
+            transVs(scaleV(getPointsArc(6,pi*2.5,pi*1.5),1,.5,1),0,-.5,0) +
             [makeV(-1,0,0)]
         )
     elif letter=='I':
@@ -100,13 +100,13 @@ def makeLetter(letter):
     elif letter=='C':
         return getPointsArc(12,pi*.25,pi*2-pi*.25)
     elif letter=='O':
-        return getPointsArc(16,0,pi*2)
+        return getPointsArc(10,0,pi*2)
     elif letter=='V':
         return [makeV(-1,-1,0),makeV(0,1,0),makeV(1,-1,0)]
     if letter=='S':
         return (
-            transVs(scaleV(getPointsArc(8,0,pi*1.5),1,.5,1),0,-.5,0) +
-            transVs(scaleV(getPointsArc(8,pi*.5,-pi*1),1,.5,1),0,.5,0)
+            transVs(scaleV(getPointsArc(6,0,pi*1.5),1,.5,1),0,-.5,0) +
+            transVs(scaleV(getPointsArc(6,pi*.5,-pi*1),1,.5,1),0,.5,0)
         )
     elif letter=='N':
         return [makeV(-1,1,0),makeV(-1,-1,0),makeV(1,1,0),makeV(1,-1,0)]

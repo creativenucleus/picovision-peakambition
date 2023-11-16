@@ -130,7 +130,7 @@ class MusicPlayer:
                 "volume": .6
             }), MusicChannel(1, {
                 "waveforms": Channel.SINE,
-                "attack": 0.1, "decay": 0.1, "sustain": 0.1, "release": 0.1,
+                "attack": 0.05, "decay": 0.1, "sustain": 0.1, "release": 0.1,
                 "volume": 1
             }), MusicChannel(2, {
                 "waveforms": Channel.NOISE,
