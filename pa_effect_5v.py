@@ -6,9 +6,10 @@ import pa_shared_vars as shared_vars
 class paCEffect5V(paCEffect):
     def __init__(self, iVersion):
         super().__init__()
-        self.dotStartDx = [-.019, .017, -.007, -.019, .017, -.007]
+        self.dotStartDx = [-.019, .017, -.007]
         self.dotAddInterval = 0.15
         self.dotAddLast = -self.dotAddInterval
+        self.iVersion = iVersion
 
         self.dots = []
         
@@ -38,7 +39,8 @@ class paCEffect5V(paCEffect):
         """
         
         for i, d in enumerate(self.dots):
-            gfx.set_pen(gfx.create_pen_hsv(i/len(self.dotStartDx), 1, .2 + shared_vars.MUSIC_OUT_PULSE*.8))
+            v = 1 if self.iVersion == 0 else .2 + shared_vars.MUSIC_OUT_PULSE * .8
+            gfx.set_pen(gfx.create_pen_hsv(i/len(self.dotStartDx), 1, v))
             newX, newY = d['x']+d['dx'], d['y']+d['dy']
             if d['x'] <= 0:
                 isI = lineIntersect(d['x'],d['y'], newX,newY, tx0,ty0, tx1,ty1)
@@ -68,4 +70,4 @@ class paCEffect5V(paCEffect):
         return "Bounces"
     
     def detail(self):
-        return ""
+        return "Some line intersections and fake gravity.\nThe processor does not seem to like all the calculations in\nthis one!\n...So I'm sticking with just three smooth balls"

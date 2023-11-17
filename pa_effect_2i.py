@@ -42,4 +42,4 @@ class paCEffect2I(paCEffect):
         return "Twister"
     
     def detail(self):
-        return "What an amazing effect\nDoes this spread over two lines?"
+        return "This is a really pretty effect!\nThe shape is like a square, rotated for each horizontal line\nLots of sin and cos happening here!"

@@ -48,4 +48,4 @@ class paCEffect9O(paCEffect):
         return "Starfield"
     
     def detail(self):
-        return ""
+        return "A classic starfield.\nEnjoy the dots, captain.\nWarp factor something or other, I guess?!"

@@ -22,9 +22,8 @@ gfx=PicoGraphics(pen_type=PEN_RGB555, width=320, height=240)
 
 shared_vars.GFX = gfx
 
-#gfx=PicoGraphics(pen_type=PEN_RGB555, width=640, height=480)
 WIDTH,HEIGHT=gfx.get_bounds()
-DISPLAY={'w': WIDTH, 'h': HEIGHT, 'xmid': int(WIDTH/2), 'ymid': int(HEIGHT/2)-1, 'scale': 100}
+DISPLAY={'w': WIDTH, 'h': HEIGHT, 'xmid': int(WIDTH/2), 'ymid': int(HEIGHT/2), 'scale': 100}
 tau=pi*2
 WHALF=int(WIDTH/2)
 HHALF=int(HEIGHT/2)
@@ -53,7 +52,7 @@ SCRIPT=[
     {'action':"move", 'letter':8, 'rz': -pi*1.75},
     {'action':"effect", 'ceffect':paCEffect9O, 'duration': 2},
     {'action':"move", 'letter':9, 'rz': -pi*.25},
-    {'action':"effect", 'ceffect':paCEffect10N, 'duration': 4},
+    {'action':"effect", 'ceffect':paCEffect10N, 'duration': 2},
 ]
 
 def getPatternDuration(iScriptItem):
@@ -93,27 +92,28 @@ def doScript(scriptItem, isInit, lerpPos, sweepPos):
         if ILOOP == 1:
             legend = EFFECT.legend()
             detail = EFFECT.detail()
-            x,y=WHALF-len(legend)*7,10
-            xl,yl=20,HEIGHT-20
+            x,y=5,190
             gfx.set_pen(RED)
-            gfx.text(legend, x+1,y+1)
-            gfx.set_pen(BLACK)
-            gfx.text(detail, xl+1,yl+1, scale=1)
+            gfx.text(legend, x+1,y+1, scale=1)
             gfx.set_pen(WHITE)
-            gfx.text(legend, x,y)
-            gfx.text(detail, xl,yl, scale=1)
-    
+            gfx.text(legend, x,y, scale=1)
+            gfx.set_pen(BLACK)
+            gfx.text(detail, x+1,y+15, scale=1)
+            gfx.set_pen(WHITE)
+            gfx.text(detail, x,y+14, scale=1)
+
 def lerp(t,v1,v2):
     return (1-t)*v1+t*v2
 
 def smoothStep(t):
     return t * t * (3.0 - 2.0 * t)
 
-def rampUpThenDown(t):
-    if t<.2:
-        return t/.2
-    elif t>.8:
-        return (1-t)/.2
+# t is the unit 0-1, rs is rampSpeed (e.g. 0.1)
+def rampUpThenDown(t, rs):
+    if t<rs:
+        return t/rs
+    elif t>(1-rs):
+        return (1-t)/rs
     else:
         return 1
 
@@ -130,7 +130,7 @@ def mainDemo():
     TIMER_SAMPLES=10
     TIMER_N=0
     TIMER_COUNT=0
-    DURATION=""
+    # DURATION=""
     LAST_PICOVISION_LINES=[]
     LAST_PICOVSION_LETTER=0
     scriptItem = SCRIPT[SCRIPT_POS]
@@ -142,7 +142,7 @@ def mainDemo():
     focusLetter = 9
     cueStartNextScriptItem = False
 
-    
+    # Use this code for testing effects in isolation...
     # paCEffect1P - landscape
     # paCEffect2I - twister
     # paCEffect3C - filled model
@@ -211,18 +211,24 @@ def mainDemo():
                 lerpPos = ((musicAccPattern - startPattern) * 64 + musicRow) / (patternDuration * 64)
                 sweepPos = smoothStep(lerpPos)
 
+        intensityRamp = rampUpThenDown(lerpPos, .2)
+        intensityRamp2 = rampUpThenDown(lerpPos, .1)
+
         # Draw the stored shape...
         if scriptItem['action'] == "effect":
-            PICOVISION.drawLines(LAST_PICOVISION_LINES, gfx, LAST_PICOVSION_LETTER, LAST_PICOVSION_LETTER+1)
+            if focusLetter == 9:
+                PICOVISION.drawLines(LAST_PICOVISION_LINES, gfx, LAST_PICOVSION_LETTER, LAST_PICOVSION_LETTER+1, clamp(1 - lerpPos * 10, 0, 1))
+            else:
+                PICOVISION.drawLines(LAST_PICOVISION_LINES, gfx, LAST_PICOVSION_LETTER, LAST_PICOVSION_LETTER+1, .2+(1-intensityRamp2)*.8)
+
 
         doScript(scriptItem, isEffectInit, lerpPos, sweepPos)
 
-        otherIntensity = rampUpThenDown(lerpPos)
         if scriptItem['action'] == "move":
             if lerpPos > .5:
                 focusLetter = scriptItem['letter']
             if scriptItem['letter'] == 0 and lerpPos < .5:
-                otherIntensity = 1  # Special case for wraparound
+                intensityRamp = 1  # Special case for wraparound
 
             LAST_PICOVISION_LINES = PICOVISION.draw(
                 gfx, DISPLAY,
@@ -232,14 +238,16 @@ def mainDemo():
                 extra={
                     't': T,
                     'focusLetter': focusLetter,
-                    'otherIntensity': otherIntensity
+                    'otherIntensity': intensityRamp
                 }
             )
             LAST_PICOVSION_LETTER = scriptItem['letter']
-    
+
+        """
         gfx.set_pen(WHITE)
         gfx.text(DURATION, 0,10, fixed_width=1,scale=1)
         gfx.text("{}".format(lerpPos), 0, 20, fixed_width=1,scale=1)
+        """
 
         gfx.update()
         T=T+1
@@ -254,19 +262,52 @@ def mainDemo():
         isEffectInit = False
 
         
-def textScreen(textLines, duration):
+def textScreen(textLines, pvIsMoveIn, preWait, animDuration, postWait):
     t = 0
-    while t < duration:
+    while True:
         gfx.set_pen(BLACK)
         gfx.clear()
 
-        for i, line in enumerate(textLines):
-            gfx.set_pen(gfx.create_pen_hsv(10+i*.01-t*.005, 1, 1))
-            x, y = 30, i*10
-            gfx.text(line, x,y, fixed_width=1,scale=1)
+        draw = False
+        z = 0
+        unitT = clamp((t - preWait) / animDuration, 0, 1)
+
+        if pvIsMoveIn:
+            if unitT > 0:
+                draw = True
+                z = (1 - unitT) * -9
+        else:
+            if unitT < 1:
+                draw = True
+                z = unitT * -9
+
+        if draw:
+            PICOVISION.draw(
+                gfx, DISPLAY,
+                None,
+                [-CAM['p'][0],-CAM['p'][1],-CAM['p'][2] + z],
+                None,
+                extra={
+                    't': T,
+                    'focusLetter': 9,
+                    'otherIntensity': 1
+                }
+            )
+
+        yText = 0
+        for line in textLines:
+            yText += 12 + line['ys']
+            scale = 1 if not "scale" in line else line["scale"]
+            h = 10+yText*.001-t*.005
+            gfx.set_pen(gfx.create_pen_hsv(h+.3, 1, .5))
+            gfx.text(line['l'], line['x']+1+int(sin(1+t*.08+yText)), yText+int(sin(t*.06+yText)), fixed_width=1,scale=scale)
+            gfx.set_pen(gfx.create_pen_hsv(h, .7, 1))
+            gfx.text(line['l'], line['x'], yText, fixed_width=1,scale=scale)
 
         gfx.update()
         t = t + 1
+        if t > preWait + animDuration + postWait:
+            return
 
 def raiseError(textLines):
     while True:
@@ -285,36 +326,24 @@ def demo_thread():
     if errors != None:
         raiseError(errors)
 
-    """
     textScreen([
-        "Welcome here",
-        "This is my demo",
-        "I hope you like it",
-        "It's a bit rough around the edges",
-        "But it's a demo",
-        "So that's ok",
-        "I hope you like it",
-        "I hope you like it",
-        "I hope you like it",
-        "Welcome here",
-
-"This is my demo",
-        "I hope you like it",
-        "It's a bit rough around the edges",
-        "But it's a demo",
-        "So that's ok",
-        "I hope you like it",
-        "I hope you like it",
-        "I hope you like it",
-    ], 200)
-    """
-    
+        {'ys': 10, 'x': 90, 'l': "Aiming Higher than you dare", },
+        {'ys': 10, 'x': 10, 'l': "Putting More on your plate than you think you can handle"},
+        {'ys': 10, 'x': 75, 'l': "There's nothing finer than a little"},
+        {'ys': 90, 'x': 76, 'l': "- PEAK AMBITION -", 'scale': 2},
+        {'ys': 40, 'x': 75, 'l': "jtruk / Pimoroni Picovision / 2023"},
+    ], True, 150, 100, 50)
     mainDemo()
 
     shared_vars.MUSIC_IN_ACTION = "stop"
     textScreen([
-        "End!",
-    ], 200)
+        {'ys': 10, 'x': 116, 'l': "I hope you enjoyed"},
+        {'ys': 14, 'x': 76, 'l': "- PEAK AMBITION -", 'scale':2},
+        {'ys': 110, 'x': 20, 'l': "Greetz to all, esp: RiFT, Field-FX & the Byte Jam crowd!"},
+        {'ys': 6, 'x': 35, 'l': "Thanks to the Picovision, the Pimoroni folks, and sin + cos <3"},
+        {'ys': 6, 'x': 90, 'l': "See you in another demo... :)"},
+        {'ys': 12, 'x': 75, 'l': "jtruk / Pimoroni Picovision / 2023"},
+    ], False, 50, 100, 50)
 
 def sfx_thread():
     musicPlayer = MusicPlayer(getTune())

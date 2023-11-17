@@ -3,7 +3,7 @@ from math import sin, cos, pi, sqrt
 
 LETTERS = [
     {'l': 'P', 't': [0,0,0], 'o': [0,-.5,0]},
-    {'l': 'I', 't': [1.5,0,0], 'o': [0,0,0.03]},
+    {'l': 'I', 't': [1.5,0,0], 'o': [0,0,0.4]},
     {'l': 'C', 't': [3,0,0], 'o': [0,0,0]},
     {'l': 'O', 't': [5,0,0], 'o': [0,0,0]},
     {'l': 'V', 't': [7,0,0], 'o': [0,0,-.5]},
@@ -67,13 +67,13 @@ class jtruk3DModelPicovision(jtruk3DModel):
                 vLast=v
             allLines.append(letterLines)
 
-        self.drawLines(allLines, gfx, 0, len(self.iLetterDef))
+        self.drawLines(allLines, gfx, 0, len(self.iLetterDef), 1)
         return allLines
     
-    def drawLines(self, allLines, gfx, lStart, lEnd):
+    def drawLines(self, allLines, gfx, lStart, lEnd, intensity):
         for iLetter in range(lStart, lEnd):
-            for l in allLines[iLetter]:
-                gfx.set_pen(gfx.create_pen_hsv(l['h'],1,l['i']))
+            for il, l in enumerate(allLines[iLetter]):
+                gfx.set_pen(gfx.create_pen_hsv(l['h'],1,l['i'] * intensity))
                 gfx.line(l['x0'],l['y0'],l['x1'],l['y1'],l['t'])
 
 class jtruk3DModelLetter(jtruk3DModel):

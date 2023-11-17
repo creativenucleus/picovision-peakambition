@@ -31,4 +31,4 @@ class paCEffect10N(paCEffect):
         return ""
     
     def detail(self):
-        return ""
+        return "That's your lot! Thanks for watching.\n\nSorry for the sound glitches! (:-o)"

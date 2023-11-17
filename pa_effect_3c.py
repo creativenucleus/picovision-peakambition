@@ -9,7 +9,7 @@ class paCEffect3C(paCEffect):
         self.icosahedron=jtruk3DPlatonicSolid(1)
 
         self.x, self.y, self.z = 0, -1, 0
-        self.dx, self.dy, self.dz = .07, .01, .12
+        self.dx, self.dy, self.dz = .15, .01, .09
         self.rx, self.rz = 0, 0        
         self.drx, self.drz = .07, .07
         self.vertices = []
@@ -36,7 +36,7 @@ class paCEffect3C(paCEffect):
         self.icosahedron.draw(gfx, display, [rX, rY, rZ], [self.x, self.y, self.z + 5], None, extra={'pulse': self.iVersion == 1})
 
     def legend(self):
-        return "Icosahedron"
+        return "Flat Polygons"
     
     def detail(self):
-        return "With basic face lighting"
+        return "The icosahedron is a solid with 20 faces.\nIt's neatly defined by three overlapping boxes\nThere's some normal and dot-product maths to do nice face\nlighting"

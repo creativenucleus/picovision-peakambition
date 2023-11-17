@@ -6,12 +6,20 @@ class paCEffect1P(paCEffect):
     def __init__(self, iVersion):
         super().__init__()
         
+        self.iVersion = iVersion
         self.lineDefs = []
         self.farDistance = 10
         self.lineAddFreq = .05
         self.lastLineAdd = -self.lineAddFreq
 
     def draw(self, gfx, display, lerpPos, sweepPos):
+        if self.iVersion == 0:
+            camY = .7
+            rotW = sin(sweepPos*20)*.1
+        else:
+            camY = .1 + abs(sin(sweepPos*10))*2
+            rotW = sin(sweepPos*20)*.3
+
         camZ = sweepPos * 40
         if sweepPos - self.lastLineAdd > self.lineAddFreq:
             z = camZ + self.farDistance
@@ -19,10 +27,9 @@ class paCEffect1P(paCEffect):
             self.lastLineAdd = sweepPos
 
         delLines = []
-        rotW = sin(sweepPos*40)*.3
         for iLine, lineDef in enumerate(self.lineDefs):
             if lineDef['z'] >= camZ:
-                lineDef['line'].draw(gfx, display, None, [0,.7,-camZ], [0,0,rotW], sweepPos)
+                lineDef['line'].draw(gfx, display, None, [0,camY,-camZ], [0,0,rotW], sweepPos)
             else:
                 delLines.append(iLine)
         
@@ -33,6 +40,6 @@ class paCEffect1P(paCEffect):
         return "Wave Landscape"
     
     def detail(self):
-        return ""
+        return "This effect was sometimes driven by music, with the landscape\ndrawn from sound waves, or fractals.\nAlso used in some early games, for flying over alien planets!"
 
 

@@ -26,4 +26,4 @@ class paCEffect6I(paCEffect):
         return "Alcatraz Bars"
     
     def detail(self):
-        return ""
+        return "Also known by some as Kefrens Bars or Raster Bars.\nThis effect benefitted from the vertical draw of the screen\nbuilding up each time\n...but I'm cheating and using rectangles! :)"

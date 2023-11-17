@@ -21,5 +21,5 @@ class paCEffect4O(paCEffect):
         return "Dot Tunnel"
     
     def detail(self):
-        return ""
+        return "The retro demo dot tunnels used a lot of pixels and were\nclever about sharing or precalculating the maths"
 
