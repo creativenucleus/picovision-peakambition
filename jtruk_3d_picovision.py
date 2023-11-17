@@ -48,10 +48,17 @@ class jtruk3DModelPicovision(jtruk3DModel):
                     thickness = clamp(int(sqrt(25/(v['p'][2]))), 2, 5)
 
                 if vLast != None:
+                    if iLetter == extra['focusLetter']:
+                        if iLetter == 9 and iV == 70 or iV == 72:
+                            intensity = .2
+                        intensity = 1
+                    else:
+                        intensity = extra['otherIntensity']
+
                     hue=iV*0.002+extra['t']*0.015
                     line={
                         'h': hue,
-                        'i': 1 if (extra['focusLetter']==iLetter) else extra['otherIntensity'],
+                        'i': intensity,
                         'x0': v['pp'][0], 'y0': v['pp'][1],
                         'x1': vLast['pp'][0], 'y1': vLast['pp'][1],
                         't': thickness
@@ -81,7 +88,7 @@ class jtruk3DModelLetter(jtruk3DModel):
         return LETTERS[self.iLetter]['t']
 
     def _draw(self, gfx, verts, extra):
-        gfx.set_pen(gfx.create_pen_hsv(0,1,1))
+        gfx.set_pen(gfx.create_pen_hsv(0,1,extra['v']))
         vLast = None
         for v in verts:
             if vLast != None:

@@ -5,7 +5,7 @@ import _thread
 from jtruk_sprite import jtrukSpriteModel, jtrukSprites
 from jtruk_music_player import MusicPlayer
 from jtruk_3d_picovision import jtruk3DModelPicovision
-from jtruk_tune_main import getTune
+from pa_tune_main import getTune
 import pa_shared_vars as shared_vars
 from pa_effect_1p import paCEffect1P
 from pa_effect_2i import paCEffect2I
@@ -144,7 +144,34 @@ def mainDemo():
     nextMusicPatternTrigger = patternDuration
     isEffectInit = True
     shared_vars.MUSIC_IN_ACTION = "play"
+    focusLetter = 9
 
+    
+    # paCEffect1P - landscape
+    # paCEffect2I - twister
+    # paCEffect3C - filled model
+    # paCEffect4O - dot tunnel
+    # paCEffect5V - V
+    # paCEffect6I - alcatraz bars
+    # paCEffect7S - bobs
+    # paCEffect8I - raster bars
+    # paCEffect9O - starfield      Y   Y
+    # paCEffect10N - picovision
+    """
+    effect = paCEffect3C(1)
+    while True:
+        gfx.set_pen(BLACK)
+        gfx.clear()
+
+        musicAccPattern = shared_vars.MUSIC_OUT_ACCPATTERN 
+        musicRow = shared_vars.MUSIC_OUT_ROW
+        patternDuration = 4
+        lerpPos = ((musicAccPattern - startPattern) * 64 + musicRow) / (patternDuration * 64)
+        sweepPos = smoothStep(lerpPos)
+        effect.draw(gfx, DISPLAY, lerpPos, sweepPos)
+        gfx.update()
+        T=T+1
+    """
     while True:
         timestamp=ticks_cpu()
 
@@ -173,7 +200,7 @@ def mainDemo():
             scriptItem = SCRIPT[SCRIPT_POS]
         
             # End after two loops
-            if ILOOP > 2:
+            if ILOOP >= 2:
                 return
 
         lerpPos = ((musicAccPattern - startPattern) * 64 + musicRow) / (patternDuration * 64)
@@ -183,7 +210,11 @@ def mainDemo():
 
         otherIntensity = rampUpThenDown(lerpPos)
         if scriptItem['action'] == "move":
-            focusLetter = scriptItem['letter'] if lerpPos > .5 else (scriptItem['letter']-1)%len(PICOVISION.iLetterDef)
+            if lerpPos > .5:
+                focusLetter = scriptItem['letter']
+            if scriptItem['letter'] == 0 and lerpPos < .5:
+                otherIntensity = 1  # Special case for wraparound
+
             LAST_PICOVISION_LINES = PICOVISION.draw(
                 gfx, DISPLAY,
                 [sin(sweepPos*pi*2)*3+sin(lerpPos*pi*4),0,0],
@@ -198,7 +229,7 @@ def mainDemo():
             LAST_PICOVSION_LETTER = scriptItem['letter']
         else:
             PICOVISION.drawLines(LAST_PICOVISION_LINES, gfx, LAST_PICOVSION_LETTER, LAST_PICOVSION_LETTER+1)
-
+    
         gfx.set_pen(WHITE)
         gfx.text(DURATION, 0,10, fixed_width=1,scale=1)
         gfx.text("{}".format(lerpPos), 0, 20, fixed_width=1,scale=1)
@@ -215,6 +246,7 @@ def mainDemo():
 
         isEffectInit = False
 
+        
 def textScreen(textLines, duration):
     t = 0
     while t < duration:
@@ -258,7 +290,8 @@ def demo_thread():
         "I hope you like it",
         "I hope you like it",
         "Welcome here",
-        "This is my demo",
+
+"This is my demo",
         "I hope you like it",
         "It's a bit rough around the edges",
         "But it's a demo",

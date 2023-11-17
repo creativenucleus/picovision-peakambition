@@ -11,18 +11,18 @@ class paCEffect1P(paCEffect):
         self.lineAddFreq = .05
         self.lastLineAdd = -self.lineAddFreq
 
-    def draw(self, gfx, display, lerpPos, tweenPos):
-        camZ = tweenPos * 40
-        if tweenPos - self.lastLineAdd > self.lineAddFreq:
+    def draw(self, gfx, display, lerpPos, sweepPos):
+        camZ = sweepPos * 40
+        if sweepPos - self.lastLineAdd > self.lineAddFreq:
             z = camZ + self.farDistance
-            self.lineDefs.append({'line': jtruk3DModelLine(10, tweenPos, .5, z), 'z': z})
-            self.lastLineAdd = tweenPos
+            self.lineDefs.append({'line': jtruk3DModelLine(10, sweepPos, .5, z), 'z': z})
+            self.lastLineAdd = sweepPos
 
         delLines = []
-        rotW = sin(tweenPos*40)*.3
+        rotW = sin(sweepPos*40)*.3
         for iLine, lineDef in enumerate(self.lineDefs):
             if lineDef['z'] >= camZ:
-                lineDef['line'].draw(gfx, display, None, [0,.7,-camZ], [0,0,rotW], tweenPos)
+                lineDef['line'].draw(gfx, display, None, [0,.7,-camZ], [0,0,rotW], sweepPos)
             else:
                 delLines.append(iLine)
         

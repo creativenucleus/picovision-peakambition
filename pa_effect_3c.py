@@ -1,15 +1,12 @@
-from math import sin, cos
 from pa_effect import paCEffect
-from jtruk_3d import jtruk3DModelFilled
+from jtruk_3d_platonic_solid import jtruk3DPlatonicSolid
 
 class paCEffect3C(paCEffect):
     def __init__(self, iVersion):
         super().__init__()
+        self.iVersion = iVersion
 
-        if iVersion == 0:
-            self.icosahedron=jtruk3DModelFilled(0)
-        else:
-            self.icosahedron=jtruk3DModelFilled(1)
+        self.icosahedron=jtruk3DPlatonicSolid(1)
 
         self.x, self.y, self.z = 0, -1, 0
         self.dx, self.dy, self.dz = .07, .01, .12
@@ -36,7 +33,7 @@ class paCEffect3C(paCEffect):
         self.dy += .02
         self.rx += self.drx
         self.rz += self.drz
-        self.icosahedron.draw(gfx, display, [rX, rY, rZ], [self.x, self.y, self.z + 5], None, lerpPos)
+        self.icosahedron.draw(gfx, display, [rX, rY, rZ], [self.x, self.y, self.z + 5], None, extra={'pulse': self.iVersion == 1})
 
     def legend(self):
         return "Icosahedron"

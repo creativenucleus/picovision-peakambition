@@ -1,16 +1,25 @@
-from math import sin
+from math import sin, cos
 from pa_effect import paCEffect
+import pa_shared_vars as shared_vars
 
 class paCEffect6I(paCEffect):
     def __init__(self, iVersion):
         super().__init__()
+        self.iVersion = iVersion
         
     def draw(self, gfx, display, lerpPos, tweenPos):
         nBars=20
+        xmid = display["xmid"]
         for i in range(nBars):
-            x=120+int(sin(i*.07+lerpPos*16)*40+sin(i*.12+lerpPos*25)*40)
+            x=xmid+int(sin(i*.07+lerpPos*36)*60+cos(i*.15+lerpPos*25)*20)
             y=70+i*4
-            gfx.set_pen(gfx.create_pen_hsv(i/nBars,1,i/nBars))
+            if self.iVersion == 0:
+                gfx.set_pen(gfx.create_pen_hsv(i/nBars,1,i/nBars))
+            else:
+                if i % 2 == 0:
+                    gfx.set_pen(gfx.create_pen_hsv(i/nBars,1,(i/nBars) * .3))
+                else:
+                    gfx.set_pen(gfx.create_pen_hsv(i/nBars,1,(i/nBars) * shared_vars.MUSIC_OUT_PULSE))
             gfx.rectangle(x-4,y,8, display['h']-y)
 
     def legend(self):

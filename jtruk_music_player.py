@@ -159,6 +159,12 @@ class MusicPlayer:
                 cellRaw = self.patterns[self.iPattern][iCh][self.iRow]
                 self.channels[iCh].decode(cellRaw)
 
+            # Send a heartbeat for effect sync (this should ideally be driven by the played note!.. but tempus has fugitted)
+            if self.iRow % 16 == 0:
+                shared_vars.MUSIC_OUT_PULSE = 1
+            else:
+                shared_vars.MUSIC_OUT_PULSE = max(shared_vars.MUSIC_OUT_PULSE -.08, 0)
+
             for i in range(self.stepsPerRow):
                 for iCh in range(nChannels):
                     self.channels[iCh].playSlot(i)        
