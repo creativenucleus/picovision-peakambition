@@ -2,7 +2,6 @@ from picographics import PicoGraphics, PEN_RGB555
 from math import sin, pi
 from time import ticks_cpu
 import _thread
-from jtruk_sprite import jtrukSpriteModel, jtrukSprites
 from jtruk_music_player import MusicPlayer
 from jtruk_3d_picovision import jtruk3DModelPicovision
 from pa_tune_main import getTune
@@ -17,7 +16,7 @@ from pa_effect_7s import paCEffect7S
 from pa_effect_8i import paCEffect8I
 from pa_effect_9o import paCEffect9O
 from pa_effect_10n import paCEffect10N
-from jtruk_3d import makeV
+from jtruk_3d import makeV, clamp
 
 gfx=PicoGraphics(pen_type=PEN_RGB555, width=320, height=240)
 
@@ -33,11 +32,6 @@ BLACK=gfx.create_pen(0, 0, 0)
 WHITE=gfx.create_pen(255, 255, 255)
 RED=gfx.create_pen(255, 0, 0)
 T=0
-
-SPRITES = jtrukSprites(20)
-shared_vars.SPRITES = SPRITES
-
-SPR_PIRATE_MODEL_ID = 0
 
 SCRIPT=[
     {'action':"move", 'letter':0, 'rz': -pi*.5},
@@ -81,6 +75,7 @@ def doScript(scriptItem, isInit, lerpPos, sweepPos):
             CAM_TWEEN0=CAM
             letter=PICOVISION.getLetterPos(scriptItem['letter'])
             CAM_TWEEN1={'p': makeV(letter[0], letter[1], letter[2] + shared_vars.DISTANCE_CLOSE), 'rz': scriptItem['rz']}
+        
         CAM={
             'p': makeV(
                 lerp(sweepPos, CAM_TWEEN0['p'][0], CAM_TWEEN1['p'][0]) + sin(sweepPos*pi*2) * 4,
@@ -145,6 +140,7 @@ def mainDemo():
     isEffectInit = True
     shared_vars.MUSIC_IN_ACTION = "play"
     focusLetter = 9
+    cueStartNextScriptItem = False
 
     
     # paCEffect1P - landscape
@@ -155,7 +151,7 @@ def mainDemo():
     # paCEffect6I - alcatraz bars
     # paCEffect7S - bobs
     # paCEffect8I - raster bars
-    # paCEffect9O - starfield      Y   Y
+    # paCEffect9O - starfield
     # paCEffect10N - picovision
     """
     effect = paCEffect3C(1)
@@ -181,8 +177,7 @@ def mainDemo():
         musicAccPattern = shared_vars.MUSIC_OUT_ACCPATTERN 
         musicRow = shared_vars.MUSIC_OUT_ROW
 
-        # Check if our music pattern has changed
-        if musicAccPattern >= nextMusicPatternTrigger:
+        if cueStartNextScriptItem:
             isEffectInit = True
             if EFFECT != None:
                 EFFECT.cleanup()
@@ -192,19 +187,33 @@ def mainDemo():
                 SCRIPT_POS=0
                 CAM={'p': makeV(0,0, shared_vars.DISTANCE_START), 'rz': 0}
                 ILOOP += 1
-            
+
             startPattern = musicAccPattern
             patternDuration = getPatternDuration(SCRIPT_POS)
             nextMusicPatternTrigger += patternDuration
-            
             scriptItem = SCRIPT[SCRIPT_POS]
-        
+            cueStartNextScriptItem = False
+
+            lerpPos = ((musicAccPattern - startPattern) * 64 + musicRow) / (patternDuration * 64)
+            sweepPos = smoothStep(lerpPos)
+
             # End after two loops
             if ILOOP >= 2:
                 return
+        else:
+            # Check if our music pattern has changed
+            if musicAccPattern >= nextMusicPatternTrigger:
+                # Do one last final from the current effect (make sure all end at pos = 1)
+                lerpPos = 1
+                sweepPos = 1
+                cueStartNextScriptItem = True
+            else:
+                lerpPos = ((musicAccPattern - startPattern) * 64 + musicRow) / (patternDuration * 64)
+                sweepPos = smoothStep(lerpPos)
 
-        lerpPos = ((musicAccPattern - startPattern) * 64 + musicRow) / (patternDuration * 64)
-        sweepPos = smoothStep(lerpPos)
+        # Draw the stored shape...
+        if scriptItem['action'] == "effect":
+            PICOVISION.drawLines(LAST_PICOVISION_LINES, gfx, LAST_PICOVSION_LETTER, LAST_PICOVSION_LETTER+1)
 
         doScript(scriptItem, isEffectInit, lerpPos, sweepPos)
 
@@ -227,8 +236,6 @@ def mainDemo():
                 }
             )
             LAST_PICOVSION_LETTER = scriptItem['letter']
-        else:
-            PICOVISION.drawLines(LAST_PICOVISION_LINES, gfx, LAST_PICOVSION_LETTER, LAST_PICOVSION_LETTER+1)
     
         gfx.set_pen(WHITE)
         gfx.text(DURATION, 0,10, fixed_width=1,scale=1)

@@ -6,7 +6,7 @@ import pa_shared_vars as shared_vars
 class paCEffect5V(paCEffect):
     def __init__(self, iVersion):
         super().__init__()
-        self.dotStartDx = [-.019, .017, -.007]
+        self.dotStartDx = [-.019, .017, -.007, -.019, .017, -.007]
         self.dotAddInterval = 0.15
         self.dotAddLast = -self.dotAddInterval
 
@@ -38,7 +38,7 @@ class paCEffect5V(paCEffect):
         """
         
         for i, d in enumerate(self.dots):
-            gfx.set_pen(gfx.create_pen_hsv(i/3, 1, .2 + shared_vars.MUSIC_OUT_PULSE*.8))
+            gfx.set_pen(gfx.create_pen_hsv(i/len(self.dotStartDx), 1, .2 + shared_vars.MUSIC_OUT_PULSE*.8))
             newX, newY = d['x']+d['dx'], d['y']+d['dy']
             if d['x'] <= 0:
                 isI = lineIntersect(d['x'],d['y'], newX,newY, tx0,ty0, tx1,ty1)
