@@ -325,14 +325,6 @@ def demo_thread():
     errors = preflightSetup()
     if errors != None:
         raiseError(errors)
-    textScreen([
-        {'ys': 10, 'x': 116, 'l': "I hope you enjoyed"},
-        {'ys': 14, 'x': 76, 'l': "- PEAK AMBITION -", 'scale':2},
-        {'ys': 110, 'x': 20, 'l': "Greetz to all, esp: RiFT, Field-FX & the Byte Jam crowd!"},
-        {'ys': 6, 'x': 3, 'l': "Thanks to the Picovision, the Pimoroni folks, and sin + cos <3"},
-        {'ys': 6, 'x': 90, 'l': "See you in another demo... :)"},
-        {'ys': 12, 'x': 75, 'l': "jtruk / Pimoroni Picovision / 2023"},
-    ], False, 50, 100, 50)
 
     textScreen([
         {'ys': 10, 'x': 90, 'l': "Aiming Higher than you dare", },
@@ -341,7 +333,17 @@ def demo_thread():
         {'ys': 90, 'x': 76, 'l': "- PEAK AMBITION -", 'scale': 2},
         {'ys': 40, 'x': 75, 'l': "jtruk / Pimoroni Picovision / 2023"},
     ], True, 150, 100, 50)
+
     mainDemo()
+
+    textScreen([
+        {'ys': 10, 'x': 116, 'l': "I hope you enjoyed"},
+        {'ys': 14, 'x': 76, 'l': "- PEAK AMBITION -", 'scale':2},
+        {'ys': 110, 'x': 20, 'l': "Greetz to all, esp: RiFT, Field-FX & the Byte Jam crowd!"},
+        {'ys': 6, 'x': 3, 'l': "Thanks to the Picovision, the Pimoroni folks, and sin + cos <3"},
+        {'ys': 6, 'x': 90, 'l': "See you in another demo... :)"},
+        {'ys': 12, 'x': 75, 'l': "jtruk / Pimoroni Picovision / 2023"},
+    ], False, 50, 100, 50)
 
     shared_vars.MUSIC_IN_ACTION = "stop"
 
