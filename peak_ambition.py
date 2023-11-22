@@ -126,6 +126,7 @@ def rampUpThenDown(t, rs):
         return 1
 
 def preflightSetup():
+    # Not enough memory for sprites, so this has to wait for another time! :(
     #shared_vars.SPR_PIRATE = jtrukSpriteModel(SPR_PIRATE_MODEL_ID, "./ninja.png")  # ./goal.png "/pim-logo.png"
     #if not shared_vars.SPR_PIRATE.load(gfx):
     #    return ["Pirate sprite not loaded - check the file is on the Picovision"]

@@ -7,6 +7,7 @@
 # Full source: https://github.com/creativenucleus/picovision-peakambition/
 
 def getTune():
+    # NB not all of these phrases get used just now. I ought to tidy this up!
     phrases = {
         "": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
         "x1": ["C5:a5:lf", "", "", "", "", "", "", "", "", "", "", "", "", "DS4:a4", "", ""],
