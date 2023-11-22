@@ -8,7 +8,7 @@ import pa_shared_vars as shared_vars
 synth = PicoSynth()
 
 # this handy list converts notes into frequencies
-# (Thanks Gagetoid)
+# (Thanks Hel Gibbons / Tom's Hardware!)
 TONES = OrderedDict({
     "B0": 31,
     "C1": 33, "CS1": 35, "D1": 37, "DS1": 39, "E1": 41, "F1": 44, "FS1": 46, "G1": 49, "GS1": 52, "A1": 55, "AS1": 58, "B1": 62,
