@@ -8,7 +8,7 @@ There's a [video recording here](https://www.youtube.com/watch?v=-l3pBx9a-Zc) bu
 
 # Info
 
-Peak Ambition is an entry to [Pimoroni's Picovision Party #000](https://shop.pimoroni.com/pages/win-a-500-gift-card-in-our-picovision-competition#picovision-party-000).
+Peak Ambition is an entry to [Pimoroni's Picovision Party #000](https://shop.pimoroni.com/pages/win-a-500-gift-card-in-our-picovision-competition#picovision-party-000), submitted 17th November 2023.
 
 Quite a short turnaround, but also quite a bit stuffed into this... hence the title - I felt I flew close to the sun!
 
