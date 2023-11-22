@@ -6,6 +6,12 @@ In case this readme gets separated, the [repository lives here](https://github.c
 
 There's a [video recording here](https://www.youtube.com/watch?v=-l3pBx9a-Zc) but beware... my video capture card is cheap and did bad stuff to the sound, so please don't judge the hardware on this video!
 
+# Running
+
+Copy all these files into the root of your Picovision with Thonny.
+
+Run the `peak_ambition.py` file.
+
 # Info
 
 Peak Ambition is an entry to [Pimoroni's Picovision Party #000](https://shop.pimoroni.com/pages/win-a-500-gift-card-in-our-picovision-competition#picovision-party-000), submitted 17th November 2023.

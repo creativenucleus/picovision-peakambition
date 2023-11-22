@@ -1,3 +1,11 @@
+# Source from Peak Ambition (jtruk)
+# License: Pirate's Honour
+# You're welcome to take / copy / adapt, but please:
+# 1) Drop me a little credit if you do, thanks :)
+# 2) Leave this header in place, to retain the license info.
+# 3) Let me know if you use / improve it!
+# Full source: https://github.com/creativenucleus/picovision-peakambition/
+
 import pa_shared_vars as shared_vars
 from jtruk_3d import jtruk3DModel, makeV, getNormal, getDotProduct, triSortZ, clamp
 from math import sqrt

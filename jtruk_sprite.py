@@ -1,3 +1,11 @@
+# Source from Peak Ambition (jtruk)
+# License: Pirate's Honour
+# You're welcome to take / copy / adapt, but please:
+# 1) Drop me a little credit if you do, thanks :)
+# 2) Leave this header in place, to retain the license info.
+# 3) Let me know if you use / improve it!
+# Full source: https://github.com/creativenucleus/picovision-peakambition/
+
 import errno
 
 # This isn't quite how I'd like it (the SpriteModel object is thrown around a bit) but it'll do for now
